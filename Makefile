@@ -1,9 +1,9 @@
 CC=gcc
 CFLAGS=-Iincludes
-DEPS = includes/tcp.h
+DEPS = includes/types.h includes/sockets.h
 OBJDIR = obj
 OBJ_CLIENT = $(OBJDIR)/client.o
-OBJ_SERVER = $(OBJDIR)/server.o
+OBJ_SERVER = $(OBJDIR)/server.o $(OBJDIR)/sockets.o
 
 all: client server
 
