@@ -1,9 +1,10 @@
 CC=gcc
-CFLAGS=-Iincludes
-DEPS = includes/types.h includes/sockets.h
+CFLAGS=-Iincludes -Wall -Werror -pedantic
+DEBUG=gdb
+DEPS = includes/types.h includes/sockets.h includes/pool.h
 OBJDIR = obj
-OBJ_CLIENT = $(OBJDIR)/client.o
-OBJ_SERVER = $(OBJDIR)/server.o $(OBJDIR)/sockets.o
+OBJ_CLIENT = $(OBJDIR)/client.o $(OBJDIR)/sockets.o
+OBJ_SERVER = $(OBJDIR)/server.o $(OBJDIR)/sockets.o $(OBJDIR)/pool.o
 
 all: client server
 
@@ -18,12 +19,11 @@ client: $(OBJ_CLIENT)
 server: $(OBJ_SERVER)
 	$(CC) -o $@ $^ $(CFLAGS)
 
-exes:
-	./server
+debugs:
+	$(DEBUG) server
 
-exec:
-	./client
+debugc:
+	$(DEBUG) client
 
 clean:
 	rm -f $(OBJDIR)/*.o client server
-	find . -type f -regex '.*/[0-9].*' -delete

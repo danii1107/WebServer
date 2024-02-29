@@ -1,8 +1,10 @@
 #include "../includes/types.h"
+#include "../includes/sockets.h"
 #include "netinet/in.h"
 
 static volatile sig_atomic_t got_sigint = 0;
 
+// Control señal sigint, cerramos conexión y liberamos recursos
 void handler_sigint(int sig)
 {
     got_sigint = 1;
@@ -15,25 +17,12 @@ int main() {
     ssize_t read_bytes, sent_bytes;
     char buffer[BUFFER_SIZE] = {0};
 
-    // Crear el socket
-    if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-        printf("\n Error al crear el socket \n");
-        return -1;
-    }
-
-    server_address.sin_family = AF_INET;
-    server_address.sin_port = htons(PORT);
-
-    // Convertir direcciones IPv4 e IPv6 de texto a binario
-    if(inet_pton(AF_INET, "127.0.0.1", &server_address.sin_addr) <= 0) {
-        printf("\nDirección IP inválida/ Dirección no soportada \n");
-        return -1;
-    }
-
-    // Conectar al servidor
-    if (connect(sock, (struct sockaddr *)&server_address, sizeof(server_address)) < 0) {
-        printf("\nConexión fallida \n");
-        return -1;
+    // Crear y establecer conexiones del socket
+    sock = make_connection_client(&server_address);
+    if (sock < 0)
+    {
+        // free
+        exit(EXIT_FAILURE);
     }
 
     act.sa_handler = handler_sigint;
@@ -65,6 +54,7 @@ int main() {
         }
         memset((void*) buffer, 0, sizeof(buffer));
 
+        // Lee el mensaje recibido del servidor
         read_bytes = recv(sock, buffer, BUFFER_SIZE, 0);
         if (read_bytes < 0) {
             if (got_sigint == 0)
@@ -78,6 +68,7 @@ int main() {
         fflush(stdout);
     }
 
+    // Si cerramos socket informamos al servidor para que cierre la conexión
     sent_bytes = send(sock, "exit", 5, 0);
     if (sent_bytes < 0) {
         perror("Error al enviar el mensaje");
