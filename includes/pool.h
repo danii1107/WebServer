@@ -4,6 +4,8 @@
 #define MAX_THREADS 10
 #define QUEUE_SIZE 100
 
+# include <signal.h>
+
 // Estructura de la tarea
 struct TODO {
     int client_sock;    			// Descriptor de socket para comunicarsse con el cliente
@@ -19,6 +21,7 @@ struct Pool {
     int q_size;                      // Tamaño de la cola de tareas
     pthread_mutex_t lock;            // Mutex para la cola dew tareas
     pthread_cond_t cond;             // Detectan la cola vacia y no lamnza hilos
+    volatile sig_atomic_t shutdown;  // Flag para terminar hilos
 };
 
 void initialize_thread_pool(struct Pool *pool);

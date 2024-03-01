@@ -35,19 +35,7 @@ int main() {
 
     while(!got_sigint)
     {
-        // Envía el mensaje leido pro entrada
-        read_bytes = read(0, buffer, BUFFER_SIZE);
-        if (read_bytes < 0)
-        {
-            if (got_sigint == 0)
-            {
-                perror("Error al recibir el mensaje STDIN");
-                exit(EXIT_FAILURE);
-            }
-            break;
-        }
-
-        sent_bytes = send(sock, buffer, strlen(buffer), 0);
+        sent_bytes = send(sock, "Me he conectado\n", 17, 0);
         if (sent_bytes < 0) {
             perror("Error al enviar el mensaje");
             exit(EXIT_FAILURE);
@@ -66,6 +54,9 @@ int main() {
         }
         write(1, buffer, strlen(buffer));
         fflush(stdout);
+
+        // Esperar 3 segundos antes de enviar otro mensaje
+        sleep(3);
     }
 
     // Si cerramos socket informamos al servidor para que cierre la conexión

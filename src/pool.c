@@ -17,6 +17,7 @@ void *handle_client_request(void *aux) {
 			perror("recvfrom");
 			exit(EXIT_FAILURE);
 		}
+		// Si el cliente cierra la conexion break (encontrar forma buena de hacerlo)
 		if (strcmp(buffer, "exit") == 0)
 		{
 			close(task->client_sock);
@@ -26,18 +27,9 @@ void *handle_client_request(void *aux) {
 		write(1, buffer, strlen(buffer));
 		fflush(stdout);
 		memset((void*) buffer, 0, sizeof(buffer));
-		
-		// Leer por stdin respuesta del servidor
-		bytesRead = read(0, buffer, BUFFER_SIZE);
-		if (bytesRead < 0)
-		{
-			perror("Error al recibir el mensaje STDIN");
-			close(task->client_sock);
-			break;
-		}
 
 		// ENviar respuesta al cliente
-		sent_bytes = send(task->client_sock, buffer, strlen(buffer), 0);
+		sent_bytes = send(task->client_sock, "Mensaje recibido\n", 18, 0);
 		if (sent_bytes < 0) {
 			close(task->client_sock);
 			break;
@@ -52,13 +44,18 @@ void *handle_client_request(void *aux) {
 void *thread_function(void *aux) {
     struct Pool *pool = (struct Pool *)aux;
 
-    while (1) {
+    while (!pool->shutdown) {
 		// Mutex control de concurrencia
         pthread_mutex_lock(&(pool->lock));
-        while (pool->q_size == 0) {
+        while (pool->q_size == 0 && !pool->shutdown) {
 			// Esperamos en vez de lanzar hjilos para mejorar eficiencia
             pthread_cond_wait(&(pool->cond), &(pool->lock));
         }
+		if (pool->shutdown) {
+			pthread_mutex_unlock(&(pool->lock));
+			break; // Salir del bucle y terminar el hilo
+		}
+
         // 'Popear' tarea de la cola
         struct TODO task = pool->todo_q[--pool->q_size];
         pthread_mutex_unlock(&(pool->lock));
@@ -74,6 +71,7 @@ void initialize_thread_pool(struct Pool *pool) {
     pthread_mutex_init(&(pool->lock), NULL);
     pthread_cond_init(&(pool->cond), NULL);
     pool->q_size = 0;
+	pool->shutdown = 0;
     for (int i = 0; i < MAX_THREADS; i++) {
         pthread_create(&(pool->threads[i]), NULL, thread_function, pool);
     }

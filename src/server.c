@@ -4,12 +4,17 @@
 #include <netinet/in.h>
 
 static volatile sig_atomic_t got_sigint = 0;
+static struct Pool *pool_ptr = NULL;
 //void **allocated_memory;
 
 // Manejo señal SIGINT, paramos bucles, liberamos recursos y paramos el servidor
 void handler_sigint(int sig)
 {
     got_sigint = 1;
+    if (pool_ptr != NULL) {
+        pool_ptr->shutdown = 1; // Indica a los hilos que deben terminar
+        pthread_cond_broadcast(&(pool_ptr->cond)); // Despierta a todos los hilos
+    }
 }
 
 int main() {
@@ -19,6 +24,9 @@ int main() {
     struct sigaction act;
     int addrlen = 0;
     int server_fd, new_socket, flag = 0;
+
+    // Asignar el puntero global a la estructura pool para controlar sigint
+    pool_ptr = &pool;
 
     // Crear y conectar socket
     server_fd = make_connection(&address);
