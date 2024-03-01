@@ -1,7 +1,7 @@
 #ifndef POOL_H
 #define POOL_H
 
-#define MAX_THREADS 10
+#define MAX_THREADS 100
 #define QUEUE_SIZE 100
 
 # include <signal.h>
