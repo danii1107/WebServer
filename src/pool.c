@@ -8,33 +8,25 @@ void *handle_client_request(void *aux) {
 	char buffer[BUFFER_SIZE] = {0};
 	
 	// Comunicacion servidor a cliente
-	while(1)
-	{
-		// leer del socket cliente
-		bytesRead = recv(task->client_sock, buffer, BUFFER_SIZE, 0);
-		if (bytesRead < 0)
-		{
-			perror("recvfrom");
-			exit(EXIT_FAILURE);
-		}
-		// Si el cliente cierra la conexion break (encontrar forma buena de hacerlo)
-		if (strcmp(buffer, "exit") == 0)
-		{
-			close(task->client_sock);
-			write(1, "connection closed\n", 18);
-			break;
-		}
-		write(1, buffer, strlen(buffer));
-		fflush(stdout);
-		memset((void*) buffer, 0, sizeof(buffer));
 
-		// ENviar respuesta al cliente
-		sent_bytes = send(task->client_sock, "Mensaje recibido\n", 18, 0);
-		if (sent_bytes < 0) {
-			close(task->client_sock);
-			break;
-		}
+	// leer del socket cliente
+	bytesRead = recv(task->client_sock, buffer, BUFFER_SIZE, 0);
+	if (bytesRead < 0)
+	{
+		perror("recv");
+		exit(EXIT_FAILURE);
 	}
+	
+	write(1, buffer, strlen(buffer));
+	fflush(stdout);
+	memset((void*) buffer, 0, sizeof(buffer));
+
+	// ENviar respuesta al cliente
+	sent_bytes = send(task->client_sock, "Mensaje recibido\n", 18, 0);
+	if (sent_bytes < 0) {
+		close(task->client_sock);
+	}
+	// Cerrar el socket
 
 	close(task->client_sock);
     return NULL;

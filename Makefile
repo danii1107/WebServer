@@ -1,20 +1,16 @@
 CC=gcc
-CFLAGS=-Iincludes -Wall -Werror -pedantic
+CFLAGS=-Iincludes -Wall -pedantic
 DEBUG=gdb
-DEPS = includes/types.h includes/sockets.h includes/pool.h
+DEPS = includes/*.h 
 OBJDIR = obj
-OBJ_CLIENT = $(OBJDIR)/client.o $(OBJDIR)/sockets.o
-OBJ_SERVER = $(OBJDIR)/server.o $(OBJDIR)/sockets.o $(OBJDIR)/pool.o
+OBJ_SERVER = $(OBJDIR)/server.o $(OBJDIR)/sockets.o $(OBJDIR)/pool.o $(OBJDIR)/picohttpparser.o $(OBJDIR)/http.o
 
-all: client server
+all: server
 
 $(shell mkdir -p $(OBJDIR))
 
 $(OBJDIR)/%.o: src/%.c $(DEPS)
 	$(CC) -c -o $@ $< $(CFLAGS)
-
-client: $(OBJ_CLIENT)
-	$(CC) -o $@ $^ $(CFLAGS)
 
 server: $(OBJ_SERVER)
 	$(CC) -o $@ $^ $(CFLAGS)
@@ -22,8 +18,5 @@ server: $(OBJ_SERVER)
 debugs:
 	$(DEBUG) server
 
-debugc:
-	$(DEBUG) client
-
 clean:
-	rm -f $(OBJDIR)/*.o client server
+	rm -f $(OBJDIR)/*.o server

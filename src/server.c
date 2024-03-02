@@ -1,5 +1,5 @@
 # include "../includes/sockets.h"
-# include "../includes/pool.h"
+# include "../includes/http.h"
 # include "../includes/types.h"
 #include <netinet/in.h>
 
@@ -19,11 +19,14 @@ void handler_sigint(int sig)
 
 int main() {
     // 3er paso struct Pool pool;
-    // 3er paso struct TODO task;
+    struct TODO task;
     struct sockaddr_in address;
     struct sigaction act;
     int addrlen = 0;
-    int server_fd, new_socket; // 3er paso , flag = 0;
+    int server_fd, new_socket;
+    int pret = 0; // 3er paso , flag = 0;
+    int bytesRead = 0;
+    char buffer[BUFFER_SIZE] = {0};
 
     // Asignar el puntero global a la estructura pool para controlar sigint
     // 3er paso pool_ptr = &pool;
@@ -49,9 +52,6 @@ int main() {
     // LLamar modulo hilos
     // 3er paso: initialize_thread_pool(&pool);
 
-    int sent_bytes = 0;
-    int bytesRead = 0;
-    char buffer[BUFFER_SIZE] = {0};
     while (!got_sigint)
     {
         // Aceptar una conexión
@@ -63,41 +63,27 @@ int main() {
             continue;
         }
 
-        pid_t pid = fork();
-        if (pid == -1) {
-            perror("fork");
-            exit(EXIT_FAILURE);
-        } else if (pid == 0) {
-            while (1)
-            {
-                bytesRead = recv(new_socket, buffer, BUFFER_SIZE, 0);
-                if (bytesRead < 0)
-                {
-                    perror("recvfrom");
-                    exit(EXIT_FAILURE);
-                }
-                // Si el cliente cierra la conexion break (encontrar forma buena de hacerlo)
-                if (strcmp(buffer, "exit") == 0)
-                {
-                    close(new_socket);
-                    write(1, "connection closed\n", 18);
-                    break;
-                }
-                write(1, buffer, strlen(buffer));
-                fflush(stdout);
-                memset((void*) buffer, 0, sizeof(buffer));
-
-                // ENviar respuesta al cliente
-                sent_bytes = send(new_socket, "Mensaje recibido\n", 18, 0);
-                if (sent_bytes < 0) {
-                    close(new_socket);
-                    break;
-                }
-                // Cerrar el socket 
-            }
-            close(new_socket);
-            exit(EXIT_SUCCESS);
+        // Recibir peticion 
+        bytesRead = recv(new_socket, buffer, BUFFER_SIZE, 0);
+        if (bytesRead < 0)
+        {
+            if (got_sigint) break;
+            perror("recv"); // Controla error pero no tira el serviodr
+            //flag = 1;
+            continue;
         }
+
+        // Mostrar petición en consola del servidor
+        write(1, buffer, strlen(buffer));
+        fflush(stdout);
+
+        // procesar peticion
+        pret = parse_http_request(new_socket, buffer, bytesRead, &task);
+
+        // Limpiar buffer
+        memset((void*) buffer, 0, sizeof(buffer));
+        
+        // Cerrar el socket 
 
         /* 3er paso: if (!flag) // Preparar tarea si solo si se ha aceptado la conexión correctamente
         {
@@ -113,8 +99,8 @@ int main() {
         }
         flag = 0; */
     }
-    
-    //frees
+    close(new_socket);
+
     // Cancelar todos los hilos y liberar recursos
     /* 3er paso: for (int i = 0; i < MAX_THREADS; i++) {
         pthread_cancel(pool.threads[i]);
@@ -124,5 +110,5 @@ int main() {
     pthread_cond_destroy(&(pool.cond));
     */
     close(server_fd);
-    return 0;
+    exit(EXIT_SUCCESS);
 }

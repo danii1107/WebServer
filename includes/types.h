@@ -16,5 +16,6 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <arpa/inet.h>
+#include "picohttpparser.h"
 
 #endif
