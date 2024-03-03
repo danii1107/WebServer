@@ -8,6 +8,6 @@
 #include "pool.h"
 
 int parse_http_request(const char* buffer, size_t buflen, struct TODO* todo);
-void send_http_response(struct TODO *task);
+void send_http_response(struct TODO *task, struct ServerConfig config);
 
 #endif

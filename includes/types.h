@@ -1,8 +1,6 @@
 # ifndef TYPES_H
 # define TYPES_H
 
-
-#define PORT 8080
 #define BUFFER_SIZE 1024
 
 #include <stdio.h>
@@ -19,5 +17,12 @@
 #include <time.h>
 #include <arpa/inet.h>
 #include "picohttpparser.h"
+
+struct ServerConfig {
+	int port;
+	int max_clients;
+	char root[256];
+	char sv_name[256];
+};
 
 #endif

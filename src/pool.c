@@ -2,11 +2,11 @@
 #include "../includes/http.h"
 
 // Procesar tarea (http request)
-void *handle_client_request(void *aux) {
+void *handle_client_request(void *aux, struct ServerConfig config) {
     struct TODO *task = (struct TODO *)aux;
 
 	// ENviar respuesta al cliente
-	send_http_response(task);
+	send_http_response(task, config);
 	
 	// Cerrar el socket
 	close(task->client_sock);
@@ -34,7 +34,7 @@ void *thread_function(void *aux) {
         pthread_mutex_unlock(&(pool->lock));
         
         // Procesar la solicitud
-        handle_client_request(&task);
+        handle_client_request(&task, pool->config);
     }
     return NULL;
 }

@@ -30,19 +30,18 @@ void execute_script(const char *script_path, const char *data, char *response, s
         perror("fork");
         exit(EXIT_FAILURE);
     }
-
     if (pid == 0) { 
-        close(pipefd[0]); 
-        dup2(pipefd[1], STDOUT_FILENO); 
-        close(pipefd[1]); 
+        close(pipefd[0]); // Cerrar el extremo de lectura del pipe
+        dup2(pipefd[1], STDOUT_FILENO); // Redirigir la salida estándar al pipe
+        close(pipefd[1]); // Cerrar el extremo de escritura del pipe
 
-        execl(script_path, script_path, data, NULL);
+        execl(script_path, script_path, data, NULL); // Ejecutar el script
         perror("execl");
         exit(EXIT_FAILURE);
     } else { 
-        close(pipefd[1]); 
+        close(pipefd[1]); // Cerrar el extremo de escritura del pipe
 
-        wait(NULL); 
+        wait(NULL); // Esperar a que el hijo termine
 
         fp = fdopen(pipefd[0], "r");
         if (!fp) {
@@ -50,7 +49,7 @@ void execute_script(const char *script_path, const char *data, char *response, s
             exit(EXIT_FAILURE);
         }
 
-        fread(response, 1, response_size, fp);
+        fread(response, 1, response_size, fp); // Leer la salida del script
         fclose(fp);
     }
 }

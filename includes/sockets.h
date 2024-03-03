@@ -4,6 +4,6 @@
 #include <netinet/in.h>
 #include "types.h"
 
-int make_connection(struct sockaddr_in* address);
+int make_connection(struct sockaddr_in* address, struct ServerConfig config);
 
 #endif

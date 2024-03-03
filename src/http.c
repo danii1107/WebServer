@@ -107,25 +107,25 @@ int parse_http_request(const char* buffer, size_t buflen, struct TODO* task) {
     return pret; // Devuelve el resultado del parseo (0 para incompleto, -1 para error)
 }
 
-void send_http_response(struct TODO *task) {
+void send_http_response(struct TODO *task, struct ServerConfig config) {
     int verb;
 
     verb = get_verb(task->verb);    
     switch (verb)
     {
     case 0: // GET
-        method_get("servidor wow/1.0", task);
+        method_get(config.sv_name, task);
         break;
     case 1: // POST
-        if (method_post("servidor wow/1.0", task) < 0) {
-            http_400("servidor wow/1.0", task);
+        if (method_post(config.sv_name, task) < 0) {
+            http_400(config.sv_name, task);
         }
         break;
     case 2: // OPTIONS
-        method_options("servidor wow/1.0", task);
+        method_options(config.sv_name, task);
         break;
     default:
-        http_400("servidor wow/1.0", task);
+        http_400(config.sv_name, task);
         break;
     }
 }

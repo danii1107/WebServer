@@ -19,6 +19,7 @@ struct TODO {
 
 // Estructura del pool de hilos
 struct Pool {
+    struct ServerConfig config;      // Configuración del servidor
     pthread_t threads[MAX_THREADS];  // Hilos
     struct TODO todo_q[QUEUE_SIZE];  // COla de tareas
     int q_size;                      // Tamaño de la cola de tareas

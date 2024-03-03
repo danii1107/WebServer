@@ -18,5 +18,8 @@ server: $(OBJ_SERVER)
 debugs:
 	$(DEBUG) server
 
+valgrind:
+	valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./server
+
 clean:
 	rm -f $(OBJDIR)/*.o server

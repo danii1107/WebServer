@@ -1,6 +1,6 @@
 #include "../includes/sockets.h"
 
-int make_connection(struct sockaddr_in* address)
+int make_connection(struct sockaddr_in* address, struct ServerConfig config)
 {
 	int server_fd;
 	int opt = 1;
@@ -11,7 +11,7 @@ int make_connection(struct sockaddr_in* address)
         return -1;
     }
 
-    // Adjuntar el socket al puerto 8080
+    // Adjuntar el socket al puerto
     if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt))) {
         perror("setsockopt");
         return -1;
@@ -20,9 +20,9 @@ int make_connection(struct sockaddr_in* address)
     // Establecer campos de la estructura
     address->sin_family = AF_INET;
     address->sin_addr.s_addr = INADDR_ANY;
-    address->sin_port = htons(PORT);
+    address->sin_port = htons(config.port);
 
-    // Vincular el socket al puerto 8080
+    // Vincular el socket al puerto 
     if (bind(server_fd, (struct sockaddr *)address, sizeof(*address)) < 0) {
         perror("bind failed");
         return -1;

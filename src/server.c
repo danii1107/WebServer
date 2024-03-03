@@ -16,9 +16,38 @@ void handler_sigint()
     }
 }
 
+// Leer server.conf y cargar configuración
+int read_server_config(struct ServerConfig *config)
+{
+    FILE *file = fopen("server.conf", "r");
+    if (file == NULL) {
+        perror("fopen");
+        return -1;
+    }
+
+    char line[256];
+    char *key, *value;
+    while (fgets(line, sizeof(line), file)) {
+        key = strtok(line, "=");
+        value = strtok(NULL, "=");
+        if (strcmp(key, "listen_port") == 0) {
+            config->port = atoi(value);
+        } else if (strcmp(key, "max_clients") == 0) {
+            config->max_clients = atoi(value);
+        } else if (strcmp(key, "server_signature") == 0) {
+            strcpy(config->sv_name, value);
+        } else if (strcmp(key, "server_root") == 0) {
+            strcpy(config->root, value);
+        }
+    }
+    fclose(file);
+    return 0;
+}
+
 int main() {
     struct Pool pool;
     struct TODO task;
+    struct ServerConfig config;
     struct sockaddr_in address;
     struct sigaction act;
     int addrlen = 0;
@@ -30,8 +59,13 @@ int main() {
     // Asignar el puntero global a la estructura pool para controlar sigint
     pool_ptr = &pool;
 
+    // Leer configuración del servidor
+    if (read_server_config(&config) < 0) {
+        exit(EXIT_FAILURE);
+    }
+
     // Crear y conectar socket
-    server_fd = make_connection(&address);
+    server_fd = make_connection(&address, config);
     if (server_fd < 0)
     {
         exit(EXIT_FAILURE);
@@ -48,6 +82,7 @@ int main() {
     }
 
     // LLamar modulo hilos
+    pool.config = config;
     initialize_thread_pool(&pool);
     
     // intentar socket varias peticiones en lugar de socket por peticion
