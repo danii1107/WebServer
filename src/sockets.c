@@ -1,5 +1,4 @@
 #include "../includes/sockets.h"
-#include "../includes/types.h"
 
 int make_connection(struct sockaddr_in* address)
 {
@@ -17,6 +16,7 @@ int make_connection(struct sockaddr_in* address)
         perror("setsockopt");
         return -1;
     }
+
     // Establecer campos de la estructura
     address->sin_family = AF_INET;
     address->sin_addr.s_addr = INADDR_ANY;
@@ -36,7 +36,7 @@ int make_connection(struct sockaddr_in* address)
 
     fprintf(stdout, "----Bienvenido al servidor----\n");
 	fprintf(stdout, "----Para detener el servidor use Ctrl+C----\n");
-	fprintf(stdout, "----Escuchando en [%s:%d]----\n", inet_ntoa(address->sin_addr), ntohs(address->sin_port));
+	fprintf(stdout, "----Escuchando en [%s:%d]----\n\n", inet_ntoa(address->sin_addr), ntohs(address->sin_port));
 
 	return server_fd;
 }

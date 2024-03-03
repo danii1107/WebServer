@@ -1,83 +1,131 @@
-#include "../includes/utils.h"
 #include "../includes/http.h"
+#include "../includes/pool.h"
 
-/* int code, const char* message, const char* content_type, const char* body, struct TODO* todo */
-void send_http_response(int socket, struct TODO *task){
-/*     int verb;
-
-    verb = get_Verb(task->verb);    
-    switch (verb)
-    {
-    case 0: // GET
-        break;
-    case 1: // POST
-        break;
-    case 2: // OPTIONS
-        break;
-    default:
-        break;
-    } */
-    
+// 400
+void http_400(char *sv_name, struct TODO *task)
+{
     char http_body[2048]; 
     char http_response[4096];
+	char date[64];
 
-    // Simplemente pruebas para ver navegador, implementar cverbos
-    snprintf(http_body, sizeof(http_body),
-             "<!DOCTYPE html>\n"
-             "<html>\n"
-             "<head>\n"
-             "    <title>Detalles de la Petición</title>\n"
-             "</head>\n"
-             "<body>\n"
-             "    <h1>Detalles de la Petición</h1>\n"
-             "    <p><strong>Método HTTP:</strong> %s</p>\n"
-             "    <p><strong>URI:</strong> %s</p>\n"
-             "    <p><strong>Versión del Protocolo:</strong> %s</p>\n"
-             "    <p><strong>Datos POST (si aplicable):</strong> %s</p>\n"
-             "</body>\n"
-             "</html>\n",
-             task->verb, task->uri, task->version, task->post_data[0] ? task->post_data : "N/A");
+    get_date(date);
+    // Pagina de error 400
+    sprintf(http_body, "<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><title>400 Bad Request</title><style>body {font-family: Arial, sans-serif;text-align: center;padding: 50px;}h1 {font-size: 36px;margin-bottom: 20px;}p {font-size: 18px;margin-bottom: 20px;}</style></head><body><h1>400 Bad Request</h1><p>Your browser sent a request that this server could not understand.</p></body></html>");
     snprintf(http_response, sizeof(http_response),
-             "HTTP/1.1 200 OK\r\n"
+             "%s 400 Bad request\r\n"
+             "Server: %s\r\n"
+             "Date: %s\r\n"
              "Content-Type: text/html; charset=UTF-8\r\n"
              "Content-Length: %lu\r\n"
              "Connection: close\r\n"
              "\r\n"
              "%s", 
-             strlen(http_body), http_body);
-
-    send(socket, http_response, strlen(http_response), 0);
+             task->version, sv_name, date, strlen(http_body), http_body);
+    // Enviar respuesta
+    send(task->client_sock, http_response, strlen(http_response), 0);
 }
 
-int parse_http_request(int socket, const char* buffer, size_t buflen, struct TODO* task) {
+// 404
+void http_404(char *sv_name, struct TODO *task)
+{
+    char http_body[2048]; 
+    char http_response[4096];
+	char date[64];
+
+    get_date(date);
+    // Página de error 404
+    sprintf(http_body, "<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><title>404 Not Found</title><style>body {font-family: Arial, sans-serif;text-align: center;padding: 50px;}h1 {font-size: 36px;margin-bottom: 20px;}p {font-size: 18px;margin-bottom: 20px;}</style></head><body><h1>404 Not Found</h1><p>The page you are looking for could not be found.</p></body></html>");
+    snprintf(http_response, sizeof(http_response),
+             "%s 404 Not found\r\n"
+             "Server: %s\r\n"
+             "Date: %s\r\n"
+             "Content-Type: text/html; charset=UTF-8\r\n"
+             "Content-Length: %lu\r\n"
+             "Connection: close\r\n"
+             "\r\n"
+             "%s", 
+             task->version, sv_name, date, strlen(http_body), http_body);
+    // Enviar respuesta
+    send(task->client_sock, http_response, strlen(http_response), 0);
+}
+
+int parse_http_request(const char* buffer, size_t buflen, struct TODO* task) {
     const char *method, *path;
     int minor_version;
     struct phr_header headers[100];
     
 	size_t method_len, path_len, num_headers = sizeof(headers) / sizeof(headers[0]);
 
+    // Parsea la solicitud HTTP
     int pret = phr_parse_request(buffer, buflen, &method, &method_len, &path, &path_len, 
                                  &minor_version, headers, &num_headers, 0);
 
+    // Si la solicitud fue parseada exitosamente
     if (pret > 0) {
         // Copia el método, URI y versión del protocolo a la estructura TO-DO
         strncpy(task->verb, method, method_len);
         task->verb[method_len] = '\0';
-
         strncpy(task->uri, path, path_len);
         task->uri[path_len] = '\0';
-
         sprintf(task->version, "HTTP/1.%d", minor_version);
 
+        // Tamaño de la solicitud
         task->len = buflen;
         
-        // Data post
-        task->post_data[0] = '\0';
-        
-        send_http_response(socket, task);
+        // Argumentos de la solicitud
+        if (strncmp(method, "GET", method_len) == 0) {
+            // Para GET, buscamos '?' en el path.
+            const char* args_start = strchr(path, '?');
+            // Si hay argumentos
+            if (args_start != NULL) {
+                args_start++;
+                // Copiar los argumentos de la solicitud a la estructura TO-DO
+                size_t args_len = path_len - (args_start - path);
+                if (args_len < sizeof(task->data)) { // SEGFAULT
+                    strncpy(task->data, args_start, args_len);
+                    task->data[args_len] = '\0';
+                }
+            }   
+        } else if (strncmp(method, "POST", method_len) == 0) {
+            // Para POST, buscamos el cuerpo del mensaje
+            const char* body_start = buffer + pret;
+            size_t body_len = buflen - pret;
+            // Copiar el cuerpo del mensaje a la estructura TO-DO
+            if (body_len < sizeof(task->data)) {
+                strncpy(task->data, body_start, body_len);
+                task->data[body_len] = '\0';
+            }
+        }
+
+        // Mostrar petición en consola del servidor
+        write(1, buffer, buflen);
+        fflush(stdout);
 
         return 1; // Éxito
     }
 
     return pret; // Devuelve el resultado del parseo (0 para incompleto, -1 para error)
+}
+
+void send_http_response(struct TODO *task) {
+    int verb;
+
+    verb = get_verb(task->verb);    
+    switch (verb)
+    {
+    case 0: // GET
+        method_get("servidor wow/1.0", task);
+        break;
+    case 1: // POST
+        if (method_post("servidor wow/1.0", task) < 0) {
+            http_400("servidor wow/1.0", task);
+        }
+        break;
+    case 2: // OPTIONS
+        method_options("servidor wow/1.0", task);
+        break;
+    default:
+        http_400("servidor wow/1.0", task);
+        break;
+    }
 }

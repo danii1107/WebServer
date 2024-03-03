@@ -1,41 +1,39 @@
-# include "../includes/sockets.h"
-# include "../includes/http.h"
-# include "../includes/types.h"
-#include <netinet/in.h>
+#include "../includes/http.h"
+#include "../includes/types.h"
+#include "../includes/pool.h"
+#include "../includes/sockets.h"
 
 static volatile sig_atomic_t got_sigint = 0;
-// 3er paso static struct Pool *pool_ptr = NULL;
-//void **allocated_memory;
+static struct Pool *pool_ptr = NULL;
 
 // Manejo señal SIGINT, paramos bucles, liberamos recursos y paramos el servidor
-void handler_sigint(int sig)
+void handler_sigint()
 {
     got_sigint = 1;
-    /* 3er paso: if (pool_ptr != NULL) {
+    if (pool_ptr != NULL) {
         pool_ptr->shutdown = 1; // Indica a los hilos que deben terminar
         pthread_cond_broadcast(&(pool_ptr->cond)); // Despierta a todos los hilos
-    } */
+    }
 }
 
 int main() {
-    // 3er paso struct Pool pool;
+    struct Pool pool;
     struct TODO task;
     struct sockaddr_in address;
     struct sigaction act;
     int addrlen = 0;
     int server_fd, new_socket;
-    int pret = 0; // 3er paso , flag = 0;
+    int pret = 0;
     int bytesRead = 0;
     char buffer[BUFFER_SIZE] = {0};
 
     // Asignar el puntero global a la estructura pool para controlar sigint
-    // 3er paso pool_ptr = &pool;
+    pool_ptr = &pool;
 
     // Crear y conectar socket
     server_fd = make_connection(&address);
     if (server_fd < 0)
     {
-        //free(allocated_memory);
         exit(EXIT_FAILURE);
     }
     addrlen = sizeof(address);
@@ -50,65 +48,51 @@ int main() {
     }
 
     // LLamar modulo hilos
-    // 3er paso: initialize_thread_pool(&pool);
-
+    initialize_thread_pool(&pool);
+    
+    // intentar socket varias peticiones en lugar de socket por peticion
     while (!got_sigint)
     {
         // Aceptar una conexión
         new_socket = accept(server_fd, (struct sockaddr *)&address, (socklen_t*)&addrlen);
         if (new_socket < 0) {
             if (got_sigint) break;
-            perror("accept"); // Controla error pero no tira el serviodr
-            //flag = 1;
-            continue;
+            perror("accept");
+            continue; // NO TIRAR EL SERVIDOR
         }
 
-        // Recibir peticion 
+        // Recibir petición
         bytesRead = recv(new_socket, buffer, BUFFER_SIZE, 0);
-        if (bytesRead < 0)
-        {
+        if (bytesRead <= 0) {
             if (got_sigint) break;
-            perror("recv"); // Controla error pero no tira el serviodr
-            //flag = 1;
-            continue;
+            perror("recv");
+            continue; // NO TIAR EL SERVIDOR
         }
 
-        // Mostrar petición en consola del servidor
-        write(1, buffer, strlen(buffer));
-        fflush(stdout);
+        // Preparar la tarea
+        task.client_sock = new_socket;
+        pret = parse_http_request(buffer, bytesRead, &task);
 
-        // procesar peticion
-        pret = parse_http_request(new_socket, buffer, bytesRead, &task);
-
-        // Limpiar buffer
-        memset((void*) buffer, 0, sizeof(buffer));
-        
-        // Cerrar el socket 
-
-        /* 3er paso: if (!flag) // Preparar tarea si solo si se ha aceptado la conexión correctamente
-        {
-            // Preparar la tarea
-            task.client_sock = new_socket;
-            // campos task http
-
-            // Agregar tarea al pool
+        // Agregar tarea al pool
+        if (pret > 0) {
             pthread_mutex_lock(&(pool.lock)); // Acceso zona crítica
             pool.todo_q[pool.q_size++] = task; // 'Push' cola de tareas
-            pthread_cond_signal(&(pool.cond)); // 'FLag' nueva task
+            pthread_cond_signal(&(pool.cond)); // 'Flag' nueva task
             pthread_mutex_unlock(&(pool.lock)); // Abrir mutex
         }
-        flag = 0; */
+
+        // Limpiar buffer para la próxima petición
+        memset((void*) buffer, 0, BUFFER_SIZE);
     }
-    close(new_socket);
 
     // Cancelar todos los hilos y liberar recursos
-    /* 3er paso: for (int i = 0; i < MAX_THREADS; i++) {
+    for (int i = 0; i < MAX_THREADS; i++) {
         pthread_cancel(pool.threads[i]);
         pthread_join(pool.threads[i], NULL);
     }
     pthread_mutex_destroy(&(pool.lock));
     pthread_cond_destroy(&(pool.cond));
-    */
+    
     close(server_fd);
     exit(EXIT_SUCCESS);
 }

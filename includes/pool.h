@@ -1,19 +1,20 @@
 #ifndef POOL_H
 #define POOL_H
 
-#define MAX_THREADS 100
-#define QUEUE_SIZE 100
+#include "types.h"
 
-# include <signal.h>
+#define MAX_THREADS 10
+#define QUEUE_SIZE 100
 
 // Estructura de la tarea
 struct TODO {
     int client_sock;    			// Descriptor de socket para comunicarsse con el cliente
     int len;           				// Longitud de la solicitud
+    char sv_name[64];   			// Nombre del servidor
     char verb[8];       			// Método HTTP: "GET", "POST", "OPTIONS"
     char uri[1024];     			// URI solicitada 
     char version[16];   			// Versión del protocolo
-    char post_data[1024];			// Datos POST
+    char data[1024];			    // Argumentos de la solicitud
 };
 
 // Estructura del pool de hilos

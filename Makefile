@@ -1,9 +1,9 @@
 CC=gcc
-CFLAGS=-Iincludes -Wall -pedantic
+CFLAGS=-Iincludes -Wall -Werror -Wextra -pedantic -fsanitize=address -g3
 DEBUG=gdb
-DEPS = includes/*.h 
+DEPS = includes/http.h includes/methods.h includes/pool.h includes/utils.h includes/picohttpparser.h includes/types.h includes/sockets.h  
 OBJDIR = obj
-OBJ_SERVER = $(OBJDIR)/server.o $(OBJDIR)/sockets.o $(OBJDIR)/pool.o $(OBJDIR)/picohttpparser.o $(OBJDIR)/http.o
+OBJ_SERVER = $(OBJDIR)/http.o $(OBJDIR)/methods.o $(OBJDIR)/pool.o $(OBJDIR)/utils.o $(OBJDIR)/picohttpparser.o $(OBJDIR)/sockets.o $(OBJDIR)/server.o 
 
 all: server
 

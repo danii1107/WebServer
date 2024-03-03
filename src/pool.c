@@ -1,33 +1,14 @@
-#include "../includes/types.h"
 #include "../includes/pool.h"
+#include "../includes/http.h"
 
 // Procesar tarea (http request)
 void *handle_client_request(void *aux) {
     struct TODO *task = (struct TODO *)aux;
-	ssize_t bytesRead, sent_bytes;
-	char buffer[BUFFER_SIZE] = {0};
-	
-	// Comunicacion servidor a cliente
-
-	// leer del socket cliente
-	bytesRead = recv(task->client_sock, buffer, BUFFER_SIZE, 0);
-	if (bytesRead < 0)
-	{
-		perror("recv");
-		exit(EXIT_FAILURE);
-	}
-	
-	write(1, buffer, strlen(buffer));
-	fflush(stdout);
-	memset((void*) buffer, 0, sizeof(buffer));
 
 	// ENviar respuesta al cliente
-	sent_bytes = send(task->client_sock, "Mensaje recibido\n", 18, 0);
-	if (sent_bytes < 0) {
-		close(task->client_sock);
-	}
+	send_http_response(task);
+	
 	// Cerrar el socket
-
 	close(task->client_sock);
     return NULL;
 }
