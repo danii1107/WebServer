@@ -1,8 +1,6 @@
-media/
-files/
+root/
 server
 client
 obj/
 lib/
-IMPORTANTE.txt
 .vscode/

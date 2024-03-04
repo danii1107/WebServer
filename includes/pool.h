@@ -10,7 +10,6 @@
 struct TODO {
     int client_sock;    			// Descriptor de socket para comunicarsse con el cliente
     int len;           				// Longitud de la solicitud
-    char sv_name[64];   			// Nombre del servidor
     char verb[8];       			// Método HTTP: "GET", "POST", "OPTIONS"
     char uri[1024];     			// URI solicitada 
     char version[16];   			// Versión del protocolo

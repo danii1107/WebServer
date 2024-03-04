@@ -79,13 +79,20 @@ int parse_http_request(const char* buffer, size_t buflen, struct TODO* task) {
             // Si hay argumentos
             if (args_start != NULL) {
                 args_start++;
+                int i;
+                for (i = 0; path + i < args_start; i++) {
+                    task->uri[i] = path[i];
+                }
+                task->uri[i - 1] = '\0';
                 // Copiar los argumentos de la solicitud a la estructura TO-DO
                 size_t args_len = path_len - (args_start - path);
                 if (args_len < sizeof(task->data)) { // SEGFAULT
                     strncpy(task->data, args_start, args_len);
                     task->data[args_len] = '\0';
                 }
-            }   
+            } else {
+                task->data[0] = '\0';
+            }  
         } else if (strncmp(method, "POST", method_len) == 0) {
             // Para POST, buscamos el cuerpo del mensaje
             const char* body_start = buffer + pret;
@@ -94,6 +101,8 @@ int parse_http_request(const char* buffer, size_t buflen, struct TODO* task) {
             if (body_len < sizeof(task->data)) {
                 strncpy(task->data, body_start, body_len);
                 task->data[body_len] = '\0';
+            } else {
+                task->data[0] = '\0';
             }
         }
 
@@ -114,10 +123,12 @@ void send_http_response(struct TODO *task, struct ServerConfig config) {
     switch (verb)
     {
     case 0: // GET
-        method_get(config.sv_name, task);
+        if (method_get(config, task) < 0) {
+            http_404(config.sv_name, task);
+        }
         break;
     case 1: // POST
-        if (method_post(config.sv_name, task) < 0) {
+        if (method_post(config, task) < 0) {
             http_400(config.sv_name, task);
         }
         break;
