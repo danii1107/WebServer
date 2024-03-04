@@ -11,14 +11,14 @@ UNZIP_DIR=root
 all: verificar_root_o_zip descomprimir_zip server
 
 verificar_root_o_zip:
-    @if [ -d $(UNZIP_DIR) ]; then \
-        echo "La carpeta $(UNZIP_DIR) ya existe. Omitiendo descarga y descompresión."; \
-    elif [ -f $(ZIP_FILE) ]; then \
-        echo "El archivo ZIP ya existe. Omitiendo descarga."; \
-    else \
-        echo "El archivo ZIP no existe. Descargando..."; \
-        curl -L $(ZIP_URL) -o $(ZIP_FILE); \
-    fi
+	@if [ -d $(UNZIP_DIR) ]; then \
+		echo "La carpeta $(UNZIP_DIR) ya existe. Omitiendo descarga y descompresión."; \
+	elif [ -f $(ZIP_FILE) ]; then \
+		echo "El archivo ZIP ya existe. Omitiendo descarga."; \
+	else \
+		echo "El archivo ZIP no existe. Descargando..."; \
+		curl -L $(ZIP_URL) -o $(ZIP_FILE); \
+	fi
 
 descomprimir_zip:
 	@if [ ! -d $(UNZIP_DIR) ]; then \

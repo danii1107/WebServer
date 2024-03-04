@@ -33,13 +33,6 @@ int  method_get(struct ServerConfig config, struct TODO *task) {
         }
         memset(task->data, 0, sizeof(task->data));
     } else { // Si no hay datos, buscar el archivo solicitado
-        // Si se busca el root devolver index.html
-        if (strcmp(task->uri, "/") == 0) {
-            strcpy(task->uri, "index.html");
-        } else { // Eliminar la barra inicial de uri
-            memmove(task->uri, task->uri + 1, strlen(task->uri));
-        }
-        
         char content_type[64];
         if (get_content_type(task->uri, content_type) != 0)
             return -1;

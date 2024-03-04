@@ -1,7 +1,7 @@
 # ifndef TYPES_H
 # define TYPES_H
 
-#define BUFFER_SIZE 1024
+#define BUFFER_SIZE 2048
 
 #include <stdio.h>
 #include <stdlib.h>

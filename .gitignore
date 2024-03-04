@@ -4,3 +4,4 @@ client
 obj/
 lib/
 .vscode/
+*.zip

@@ -37,7 +37,7 @@ int read_server_config(struct ServerConfig *config)
         } else if (strcmp(key, "server_signature") == 0) {
             strcpy(config->sv_name, value);
         } else if (strcmp(key, "server_root") == 0) {
-            strcpy(config->root, value);
+            strncpy(config->root, value, strlen(value) - 1); // Eliminar salto de línea
         }
     }
     fclose(file);
@@ -103,7 +103,7 @@ int main() {
             perror("recv");
             continue; // NO TIAR EL SERVIDOR
         }
-
+        
         // Preparar la tarea
         task.client_sock = new_socket;
         pret = parse_http_request(buffer, bytesRead, &task);
