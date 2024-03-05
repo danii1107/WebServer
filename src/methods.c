@@ -3,36 +3,29 @@
 int  method_get(struct ServerConfig config, struct TODO *task) {
 	char http_response[16384];
     char date[64];
+    int unnecesary_args = 0, script = 0;
+    
+    // Comprobar si es un script
+    if (strstr(task->uri, ".py") || strstr(task->uri, ".php")) script = 1;
 
     get_date(date);
-    if (task->data[0]) {
-        // Comprobar si es un script y ejecutarlo
-        if (strstr(task->uri, ".py") || strstr(task->uri, ".php")) { 
-            char script_output[4096];
-            execute_script(task->uri, task->data, script_output, sizeof(script_output));
-            // Armar respuesta script
-            sprintf(http_response, "%s 200 OK\r\n"
-                         "Date: %s\r\n"
-                         "Server: %s\r\n"
-                         "Content-Type: text/plain; charset=UTF-8\r\n"
-                         "Content-Length: %lu\r\n"
-                         "Connection: close\r\n"
-                         "\r\n"
-                         "%s\n",
-                         task->version, date, config.sv_name, strlen(script_output), script_output);
-        } else { // Si no es un script, armar respuesta por defecto
-            sprintf(http_response, "%s 200 OK\r\n"
-                         "Date: %s\r\n"
-                         "Server: %s\r\n"
-                         "Content-Type: text/html; charset=UTF-8\r\n"
-                         "Content-Length: %lu\r\n"
-                         "Connection: close\r\n"
-                         "\r\n"
-                         "%s\n",
-                         task->version, date, config.sv_name, (unsigned long)strlen(task->data), task->data);
-        }
-        memset(task->data, 0, sizeof(task->data));
-    } else { // Si no hay datos, buscar el archivo solicitado
+    // Comprobar si es un script y ejecutarlo
+    if (script == 1) { 
+        char script_output[4096];
+        execute_script(task->uri, task->data, script_output, sizeof(script_output));
+        // Armar respuesta script
+        sprintf(http_response, "%s 200 OK\r\n"
+                        "Date: %s\r\n"
+                        "Server: %s\r\n"
+                        "Content-Type: text/plain; charset=UTF-8\r\n"
+                        "Content-Length: %lu\r\n"
+                        "Connection: close\r\n"
+                        "\r\n"
+                        "%s\n",
+                        task->version, date, config.sv_name, strlen(script_output), script_output);
+    } else if (task->data[0]) unnecesary_args = 1; // No es script pero tiene args innecesarios
+
+    if ((unnecesary_args == 1) || !(task->data[0])) { // Si no hay datos o son innecesarios, buscar el archivo solicitado
         char content_type[64];
         if (get_content_type(task->uri, content_type) != 0)
             return -1;

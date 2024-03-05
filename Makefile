@@ -1,8 +1,10 @@
 CC=gcc
-CFLAGS=-Iincludes -Wall -Wextra -pedantic #-fsanitize=address -g3
+CFLAGS=-Iincludes -Wall -Werror -Wextra -pedantic #-fsanitize=address -g3
 DEBUG=gdb
 DEPS = includes/http.h includes/methods.h includes/pool.h includes/utils.h includes/picohttpparser.h includes/types.h includes/sockets.h  
 OBJDIR = obj
+LIBDIR = lib
+LIBRARY = $(LIBDIR)/picohttpparser.a $(LIBDIR)/p1_2322_03.a
 OBJ_SERVER = $(OBJDIR)/http.o $(OBJDIR)/methods.o $(OBJDIR)/pool.o $(OBJDIR)/utils.o $(OBJDIR)/picohttpparser.o $(OBJDIR)/sockets.o $(OBJDIR)/server.o 
 ZIP_URL=https://github.com/alber1997/AUXFOLDER/raw/main/root.zip
 ZIP_FILE=root.zip
@@ -37,11 +39,11 @@ $(OBJDIR)/%.o: src/%.c $(DEPS)
 server: $(OBJ_SERVER)
 	$(CC) -o $@ $^ $(CFLAGS)
 
-debugs:
+debug:
 	$(DEBUG) server
 
 valgrind:
 	valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./server
 
 clean:
-	rm -f $(OBJDIR)/*.o server root.zip
+	rm -f $(OBJDIR)/*.o $(LIBDIR)/*.a server root.zip

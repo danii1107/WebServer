@@ -109,6 +109,8 @@ void http_404(char *sv_name, struct TODO *task)
                         strncpy(task->data, args_start, args_len);
                         task->data[args_len] = '\0';
                     }
+                    // ELiminar ? y argumentos de la URI
+                    task->uri[path_len - args_len - 1] = '\0';
                 } else {
                     task->data[0] = '\0';
                 }  
