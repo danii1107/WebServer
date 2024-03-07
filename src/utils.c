@@ -55,10 +55,30 @@ int read_file(const char *path, char *buffer, size_t buffer_size) {
     return bytes_read;
 }
 
-void execute_script(const char *script_path, const char *data, char *response, size_t response_size) {
+// Tokenizar la cadena de argumentos  get y post y guardarlos en un array
+void parse_args(const char *args, char *parsed_args[], size_t parsed_args_size) {
+    char *args_copy = strdup(args); // Hacemos una copia de args porque strtok modifica la cadena original
+    char *token = strtok(args_copy, "&");
+    size_t i = 0;
+    while (token && i < parsed_args_size) { // Ajuste para dejar espacio para el NULL final
+    char *value = strchr(token, '=');
+        if (value) {
+            value++;
+            parsed_args[i] = strdup(value);
+            i++;
+        }
+        token = strtok(NULL, "&");
+    }
+    parsed_args[i] = NULL; // Asegurarse de que el array termine en NULL
+
+    free(args_copy); // Liberamos la copia de args
+}
+
+// EJecutar script
+int execute_script(char *script_path, char *data[], char **response, ssize_t *response_size) {
     int pipefd[2];
+    char executable[10];
     pid_t pid;
-    FILE *fp;
 
     if (pipe(pipefd) == -1) {
         perror("pipe");
@@ -72,23 +92,63 @@ void execute_script(const char *script_path, const char *data, char *response, s
     } if (pid == 0) { 
         close(pipefd[0]); // Cerrar el extremo de lectura del pipe
         dup2(pipefd[1], STDOUT_FILENO); // Redirigir la salida estándar al pipe
+        dup2(pipefd[1], STDERR_FILENO); // Redirigir la salida de error al pipe
         close(pipefd[1]); // Cerrar el extremo de escritura del pipe
 
-        execl(script_path, script_path, data, NULL); // Ejecutar el script
-        perror("execl");
-        exit(EXIT_FAILURE);
-    } else { 
-        close(pipefd[1]); // Cerrar el extremo de escritura del pipe
-
-        wait(NULL); // Esperar a que el hijo termine
-
-        fp = fdopen(pipefd[0], "r");
-        if (!fp) {
-            perror("fdopen");
-            exit(EXIT_FAILURE);
+        // Ejecutar el script python o php sin necesidad de exportar el entorno a ejecutar
+        if (strstr(script_path, ".py")) {
+            strcpy(executable, "python3");
+        } else {
+            strcpy(executable, "php");
         }
 
-        fread(response, 1, response_size, fp); // Leer la salida del script
-        fclose(fp);
+        size_t data_count;
+        for (data_count = 0; data[data_count]; data_count++);
+
+        // Reservar espacio para el nombre del ejecutable, script_path, argumentos, y NULL
+        char *argv[data_count + 3];
+        argv[0] = executable;
+        argv[1] = script_path;
+
+        // Llenar argv con los argumentos
+        for (size_t i = 0; i < data_count; i++) {
+            argv[i + 2] = data[i];
+        }
+        argv[data_count + 2] = NULL; // Terminar argv con NULL
+
+        execvp(executable, argv);
+        // Si execvp retorna, ocurrió un error
+        exit(EXIT_FAILURE);
+
+    } else {
+        close(pipefd[1]); // Cerrar el extremo de escritura del pipe
+        char buffer[16];
+        ssize_t bytesRead;
+        *response_size = 0;
+        
+        // Leer la salida del script desde el pipe
+        while ((bytesRead = read(pipefd[0], buffer, sizeof(buffer)-1)) > 0) {
+            buffer[bytesRead] = '\0'; 
+            if (strstr(buffer, "\r\n")) {
+                bytesRead -= 2; // Excluir "\r\n" del tamaño de la respuesta
+            }
+
+            // Añadir la salida del script al buffer de respuesta
+            *response = realloc(*response, *response_size + bytesRead + 1);
+            memcpy(*response + *response_size, buffer, bytesRead);
+            (*response)[*response_size + bytesRead] = '\0';
+            *response_size += bytesRead;
+
+            if (strstr(buffer, "\r\n")) break;
+        }
+        
+        close(pipefd[0]);
+        int status;
+        waitpid(pid, &status, 0);
+        if (WIFEXITED(status)) {
+            return WEXITSTATUS(status);
+        } else {
+            return -1; 
+        }
     }
 }

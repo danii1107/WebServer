@@ -155,11 +155,16 @@ void send_http_response(struct TODO *task, struct ServerConfig config) {
         strcpy(task->uri, "/templates/index.html");
     }
     // Concatenar root y task->uri
-    char *uri = malloc(strlen(task->uri) + strlen(config.root) + 1);
-    strncpy(uri, config.root, strlen(config.root));
-    uri = strcat(uri, task->uri);
-    strcpy(task->uri, uri);
-    free(uri);
+    size_t needed_size = strlen(config.root) + strlen(task->uri) + 1; // +1 para el carácter nulo
+    char *new_uri = malloc(needed_size);
+    if (new_uri != NULL) {
+        snprintf(new_uri, needed_size, "%s%s", config.root, task->uri);
+        strncpy(task->uri, new_uri, needed_size);
+        free(new_uri);
+    } else {
+        http_400(config.sv_name, task);
+        return;
+    }
     verb = get_verb(task->verb);
     switch (verb)
     {
@@ -169,7 +174,7 @@ void send_http_response(struct TODO *task, struct ServerConfig config) {
         }
         break;
     case 1: // POST
-        if (method_post(config, task) < 0) {
+        if (task->data[0] == '\0' || method_post(config, task) < 0) {
             http_400(config.sv_name, task);
         }
         break;

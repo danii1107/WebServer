@@ -3,7 +3,7 @@
 
 #include "types.h"
 
-#define MAX_THREADS 10
+#define MAX_THREADS 1
 #define QUEUE_SIZE 100
 
 // Estructura de la tarea

@@ -3,6 +3,7 @@
 int  method_get(struct ServerConfig config, struct TODO *task) {
 	char http_response[16384];
     char date[64];
+    char *script_output = NULL;
     int unnecesary_args = 0, script = 0;
     
     // Comprobar si es un script
@@ -11,8 +12,17 @@ int  method_get(struct ServerConfig config, struct TODO *task) {
     get_date(date);
     // Comprobar si es un script y ejecutarlo
     if (script == 1) { 
-        char script_output[4096];
-        execute_script(task->uri, task->data, script_output, sizeof(script_output));
+        ssize_t script_output_size = 0;
+        size_t count = 0;
+
+        // Reservar memoria para array de argumentos y tokenizarlos
+        for (int i = 0; task->data[i]; i++) {
+            if (task->data[i] == '&') count++;
+        }
+        char *parsed_args[count + 1]; // NULL al final
+        parse_args(task->data, parsed_args, count + 1);
+        execute_script(task->uri, parsed_args, &script_output, &script_output_size);
+
         // Armar respuesta script
         sprintf(http_response, "%s 200 OK\r\n"
                         "Date: %s\r\n"
@@ -22,7 +32,7 @@ int  method_get(struct ServerConfig config, struct TODO *task) {
                         "Connection: close\r\n"
                         "\r\n"
                         "%s\n",
-                        task->version, date, config.sv_name, strlen(script_output), script_output);
+                        task->version, date, config.sv_name, script_output_size, script_output);
     } else if (task->data[0]) unnecesary_args = 1; // No es script pero tiene args innecesarios
 
     if ((unnecesary_args == 1) || !(task->data[0])) { // Si no hay datos o son innecesarios, buscar el archivo solicitado
@@ -63,7 +73,8 @@ int  method_get(struct ServerConfig config, struct TODO *task) {
         // Enviar el contenido del archivo
         send(task->client_sock, file_content, file_size, 0);
 
-        free(file_content);
+        if (script_output) free(script_output);
+        if (file_content) free(file_content);
         return 0;
     }
     // Enviar respuesta si no se ha enviado ya
@@ -77,38 +88,35 @@ int method_post(struct ServerConfig config, struct TODO *task)
     char date[64];
 
     get_date(date);
-    if (task->data[0]) {
-        // Comprobar si es un script y ejecutarlo
-        if (strstr(task->uri, ".py") || strstr(task->uri, ".php")) {
-            char script_output[4096];
-            execute_script(task->uri, task->data, script_output, sizeof(script_output));
-            // Armar respuesta
-            sprintf(http_response, "%s 200 OK\r\n"
-                          "Date: %s\r\n"
-                          "Server: %s\r\n"
-                          "Content-Type: text/html; charset=UTF-8\r\n"
-                          "Content-Length: %lu\r\n"
-                          "Connection: close\r\n"
-                          "\r\n"
-                          "%s\n",
-                          task->version, date, config.sv_name, strlen(script_output), script_output);
-        } else { // Si no es un script, armar respuesta por defecto
-            sprintf(http_response, "%s 200 OK\r\n"
-                          "Date: %s\r\n"
-                          "Server: %s\r\n"
-                          "Content-Type: text/plain; charset=UTF-8\r\n"
-                          "Content-Length: %lu\r\n"
-                          "Connection: close\r\n"
-                          "\r\n"
-                          "Datos recibidos correctamente.",
-                          task->version, date, config.sv_name, (unsigned long)strlen("Datos recibidos correctamente."));
-        }
-        // Enviar respuesta
-        send(task->client_sock, http_response, strlen(http_response), 0);
-        return 0;
-    }
-    // Si no hay datos, enviar respuesta de error
-    return -1;
+    // Comprobar si es un script y ejecutarlo
+    /* if (strstr(task->uri, ".py") || strstr(task->uri, ".php")) {
+        char script_output[4096];
+        execute_script(task->uri, task->data, script_output, sizeof(script_output));
+        // Armar respuesta
+        sprintf(http_response, "%s 200 OK\r\n"
+                        "Date: %s\r\n"
+                        "Server: %s\r\n"
+                        "Content-Type: text/html; charset=UTF-8\r\n"
+                        "Content-Length: %lu\r\n"
+                        "Connection: close\r\n"
+                        "\r\n"
+                        "%s\n",
+                        task->version, date, config.sv_name, strlen(script_output), script_output);
+    } else { */ // Suponmos poder enviar un POST sin necesidad de ser un script, en servidores reales pueden ejecutarse estos post, 
+            // en nuestro caso mandamos un mensaje de confirmación
+        sprintf(http_response, "%s 200 OK\r\n"
+                        "Date: %s\r\n"
+                        "Server: %s\r\n"
+                        "Content-Type: text/plain; charset=UTF-8\r\n"
+                        "Content-Length: %lu\r\n"
+                        "Connection: close\r\n"
+                        "\r\n"
+                        "Datos recibidos correctamente.",
+                        task->version, date, config.sv_name, (unsigned long)strlen("Datos recibidos correctamente."));
+    //}
+    // Enviar respuesta
+    send(task->client_sock, http_response, strlen(http_response), 0);
+    return 0;
 }
 
 void method_options(char *sv_name, struct TODO *task) {

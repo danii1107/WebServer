@@ -21,10 +21,9 @@ La carpeta 'root' debería descargarse y descomprimirse automáticamente, en cas
 
 ---
 
-- Implementar post
-- Post sin args
-
+- post scripts, posivble funct auxiliar, muy similar get
+- server log
 - func execut script revisar a fondo task->data puede ser null (script sin arg)
-- Argumentos scripts
-- Revisar scripts se tiene que indicar env 
 - Al fallar script servidor no responde
+- templates en vez de sprintf
+- control de errores http 500
