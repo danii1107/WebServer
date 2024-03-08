@@ -7,8 +7,7 @@
 
 #include "types.h"
 
-#define MAX_THREADS 1
-#define QUEUE_SIZE 100
+#define QUEUE_SIZE 65
 
 // Estructura de la tarea
 struct TODO {
@@ -23,7 +22,7 @@ struct TODO {
 // Estructura del pool de hilos
 struct Pool {
     struct ServerConfig config;      // Configuración del servidor
-    pthread_t threads[MAX_THREADS];  // Hilos
+    pthread_t *threads;              // Hilos
     struct TODO todo_q[QUEUE_SIZE];  // COla de tareas
     int q_size;                      // Tamaño de la cola de tareas
     pthread_mutex_t lock;            // Mutex para la cola dew tareas

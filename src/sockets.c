@@ -50,7 +50,7 @@ int make_connection(struct sockaddr_in *address, struct ServerConfig config)
     }
 
     // Poner el servidor a escuchar conexiones
-    if (listen(server_fd, 100) < 0)
+    if (listen(server_fd, 64) < 0)
     {
         perror("listen");
         return -1;

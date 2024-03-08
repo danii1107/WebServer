@@ -127,6 +127,12 @@ int main()
 
     // LLamar modulo hilos
     pool.config = config;
+    pool.threads = (pthread_t *)malloc(config.max_clients * sizeof(pthread_t));
+    if (!pool.threads)
+    {
+        perror("malloc");
+        exit(EXIT_FAILURE);
+    }
     initialize_thread_pool(&pool);
 
     // intentar socket varias peticiones en lugar de socket por peticion
@@ -178,6 +184,7 @@ int main()
     pthread_mutex_destroy(&(pool.lock));
     pthread_cond_destroy(&(pool.cond));
 
+    free(pool.threads);
     close(server_fd);
     exit(EXIT_SUCCESS);
 }
