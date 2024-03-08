@@ -1,3 +1,8 @@
+/**
+ * @file types.h
+ * @author Daniel Birsan y Diego Rodrigo
+ */
+
 # ifndef TYPES_H
 # define TYPES_H
 

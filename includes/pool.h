@@ -1,3 +1,7 @@
+/**
+ * @file pool.h
+ * @author Daniel Birsan y Diego Rodrigo
+ */
 #ifndef POOL_H
 #define POOL_H
 
@@ -27,6 +31,14 @@ struct Pool {
     volatile sig_atomic_t shutdown;  // Flag para terminar hilos
 };
 
+/********
+* FUNCIÓN: void initialize_thread_pool(struct Pool *pool)
+* ARGS_IN: struct Pool *pool - Puntero a la estructura Pool que se va a inicializar y donde se van a crear los hilos.
+* DESCRIPCIÓN: Inicializa el pool de hilos, configurando los mutex y variables de condición necesarios para la sincronización,
+*              establece el estado inicial de la cola de tareas y el indicador de cierre. Luego, crea los hilos que manejarán las solicitudes,
+*              asignándoles la función thread_function para su ejecución.
+* ARGS_OUT: Ninguno (void).
+********/
 void initialize_thread_pool(struct Pool *pool);
 
 #endif
