@@ -21,7 +21,7 @@ La carpeta 'root' debería descargarse y descomprimirse automáticamente, en cas
 
 ---
 
-- post scripts, posivble funct auxiliar, muy similar get
+- pool sin define, usar config.maxclients
 - server log
 - func execut script revisar a fondo task->data puede ser null (script sin arg)
 - Al fallar script servidor no responde

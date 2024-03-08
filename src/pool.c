@@ -81,7 +81,7 @@ void initialize_thread_pool(struct Pool *pool)
     pthread_cond_init(&(pool->cond), NULL);
     pool->q_size = 0;
     pool->shutdown = 0;
-    for (int i = 0; i < MAX_THREADS; i++)
+    for (int i = 0; i < pool->config.max_clients; i++)
     {
         pthread_create(&(pool->threads[i]), NULL, thread_function, pool);
     }

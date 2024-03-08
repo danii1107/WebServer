@@ -170,7 +170,7 @@ int main()
     }
 
     // Cancelar todos los hilos y liberar recursos
-    for (int i = 0; i < MAX_THREADS; i++)
+    for (int i = 0; i < config.max_clients; i++)
     {
         pthread_cancel(pool.threads[i]);
         pthread_join(pool.threads[i], NULL);

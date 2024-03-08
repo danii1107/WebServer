@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-Iincludes -Wall -Wextra -Werror -pedantic #-fsanitize=address -g3
+CFLAGS=-Iincludes -Wall -Wextra -Werror -pedantic -fsanitize=address -g3
 DEBUG=gdb
 DEPS = includes/http.h includes/methods.h includes/pool.h includes/utils.h includes/picohttpparser.h includes/types.h includes/sockets.h  
 OBJDIR = obj
