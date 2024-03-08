@@ -27,6 +27,7 @@ descomprimir_zip:
 		echo "Descomprimiendo el archivo ZIP..."; \
 		unzip $(ZIP_FILE) -d $(UNZIP_DIR); \
 		echo "Descompresión completada."; \
+		rm -rf $(ZIP_FILE); \
 	else \
 		echo "La carpeta $(UNZIP_DIR) ya existe. Omitiendo descompresión."; \
 	fi
@@ -46,4 +47,4 @@ valgrind:
 	valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./server
 
 clean:
-	rm -f $(OBJDIR)/*.o $(LIBDIR)/*.a server root.zip
+	rm -f $(OBJDIR)/*.o $(LIBDIR)/*.a server $(ZIP_FILE)

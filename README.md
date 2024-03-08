@@ -10,6 +10,7 @@
 4. Puede ejecutar `curl -X OPTIONS "http://localhost:puerto"` para ver verbos soportados por el sistema.
 5. Ninguna petición puede ser del tipo `http://localhost:puerto/*..*` por seguridad.
 6. `make clean` borrará el ejecutable y root.zip (además de objetos y librerías estáticas) pero no borrará la carpeta descomprimida de pruebas, puede borrarla con `rm -rf root` a la altura de esta carpeta.
+7. El servidor soporta la ejecución de scripts en Python y PHP, sin embargo, los intérpretes deben estar instalados en su sistema.
 
 ---
 
@@ -21,7 +22,7 @@ La carpeta 'root' debería descargarse y descomprimirse automáticamente, en cas
 
 ---
 
-- cambiar logica scripts, php args distintos
+- control parseo de peticiones (enunciado)
 - func execut script revisar a fondo task->data puede ser null (script sin arg)
 - Al fallar script servidor no responde
 - templates en vez de sprintf
