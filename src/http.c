@@ -8,6 +8,7 @@
 
 #include "../includes/http.h"
 #include "../includes/pool.h"
+#include "../includes/log.h"
 
 /********
  * FUNCIÓN: void http_400(char *sv_name, struct TODO *task)
@@ -107,7 +108,7 @@ void http_404(char *sv_name, struct TODO *task)
  * DESCRIPCIÓN: Parsea la petición HTTP del buffer y almacena la información relevante en la estructura de tarea.
  * ARGS_OUT: int - devuelve 1 en caso de éxito, 0 si la petición es incompleta, o -1 si hay un error.
  ********/
-int parse_http_request(const char *buffer, size_t buflen, struct TODO *task)
+int parse_http_request(const char *buffer, size_t buflen, struct TODO *task, FILE *logFile)
 {
     const char *method, *path;
     int minor_version;
@@ -174,13 +175,15 @@ int parse_http_request(const char *buffer, size_t buflen, struct TODO *task)
         }
 
         // Mostrar petición en consola del servidor
-        fflush(stdout);
+        /* fflush(stdout);
         write(1, "--------------------------------\n\n", 34);
         fflush(stdout);
         write(1, buffer, buflen);
         fflush(stdout);
         write(1, "--------------------------------\n", 33);
-        fflush(stdout);
+        fflush(stdout); */
+        writeToLog(logFile, "REQUEST", buffer);
+
 
         return 1; // Éxito
     }

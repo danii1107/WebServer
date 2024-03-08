@@ -7,6 +7,7 @@
 
 #include <netinet/in.h>
 #include "types.h"
+#include "log.h"
 
 /********
 * FUNCIÓN: int make_connection(struct sockaddr_in* address, struct ServerConfig config)

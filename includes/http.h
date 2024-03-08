@@ -20,7 +20,7 @@
  * DESCRIPCIÓN: Parsea la petición HTTP del buffer y almacena la información relevante en la estructura de tarea.
  * ARGS_OUT: int - devuelve 1 en caso de éxito, 0 si la petición es incompleta, o -1 si hay un error.
  ********/
-int parse_http_request(const char* buffer, size_t buflen, struct TODO* todo);
+int parse_http_request(const char* buffer, size_t buflen, struct TODO* todo, FILE *logFile);
 
 /********
 * FUNCIÓN: void send_http_response(struct TODO *task, struct ServerConfig config)

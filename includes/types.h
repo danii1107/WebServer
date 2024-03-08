@@ -28,6 +28,7 @@ struct ServerConfig {
 	int max_clients;
 	char root[256];
 	char sv_name[256];
+	FILE *logFile;
 };
 
 #endif

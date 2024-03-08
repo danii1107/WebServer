@@ -10,6 +10,7 @@
 #include "../includes/types.h"
 #include "../includes/pool.h"
 #include "../includes/sockets.h"
+#include "../includes/log.h"
 
 static volatile sig_atomic_t got_sigint = 0;
 static struct Pool *pool_ptr = NULL;
@@ -107,6 +108,8 @@ int main()
         exit(EXIT_FAILURE);
     }
 
+    config.logFile = startLog("server.log");
+
     // Crear y conectar socket
     server_fd = make_connection(&address, config);
     if (server_fd < 0)
@@ -160,7 +163,7 @@ int main()
 
         // Preparar la tarea
         task.client_sock = new_socket;
-        pret = parse_http_request(buffer, bytesRead, &task);
+        pret = parse_http_request(buffer, bytesRead, &task, config.logFile);
 
         // Agregar tarea al pool
         if (pret > 0)
@@ -184,6 +187,8 @@ int main()
     pthread_mutex_destroy(&(pool.lock));
     pthread_cond_destroy(&(pool.cond));
 
+    stopLog(config.logFile);
+    writeToLog(config.logFile, "INFO", "Servidor finalizado");
     free(pool.threads);
     close(server_fd);
     exit(EXIT_SUCCESS);

@@ -1,11 +1,11 @@
 CC=gcc
 CFLAGS=-Iincludes -Wall -Wextra -Werror -pedantic #-fsanitize=address -g3
 DEBUG=gdb
-DEPS = includes/http.h includes/methods.h includes/pool.h includes/utils.h includes/picohttpparser.h includes/types.h includes/sockets.h  
+DEPS = includes/http.h includes/methods.h includes/pool.h includes/utils.h includes/picohttpparser.h includes/types.h includes/sockets.h includes/log.h
 OBJDIR = obj
 LIBDIR = lib
 LIBRARY = $(LIBDIR)/picohttpparser.a $(LIBDIR)/p1_2322_03.a
-OBJ_SERVER = $(OBJDIR)/http.o $(OBJDIR)/methods.o $(OBJDIR)/pool.o $(OBJDIR)/utils.o $(OBJDIR)/picohttpparser.o $(OBJDIR)/sockets.o $(OBJDIR)/server.o 
+OBJ_SERVER = $(OBJDIR)/http.o $(OBJDIR)/methods.o $(OBJDIR)/pool.o $(OBJDIR)/utils.o $(OBJDIR)/picohttpparser.o $(OBJDIR)/sockets.o $(OBJDIR)/server.o $(OBJDIR)/log.o
 ZIP_URL=https://github.com/alber1997/AUXFOLDER/raw/main/root.zip
 ZIP_FILE=root.zip
 UNZIP_DIR=root
