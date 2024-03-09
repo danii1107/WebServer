@@ -108,22 +108,34 @@ int read_file(const char *path, char *buffer, size_t buffer_size)
 }
 
 /********
+ * FUNCIÓN: void replace_char(char *str, char find, char replace)
+ * ARGS_IN: char *str - Cadena de caracteres donde reemplazar el carácter, char find - Carácter a reemplazar, char replace - Carácter por el que reemplazar.
+ * DESCRIPCIÓN: Reemplaza todas las ocurrencias de un carácter en una cadena por otro carácter.
+ * ARGS_OUT: Ninguno (void). La cadena de caracteres se modifica directamente.
+ ********/
+void replace_char(char *str, char find, char replace) {
+    char *current_pos = strchr(str, find);
+    while (current_pos) {
+        *current_pos = replace;
+        current_pos = strchr(current_pos + 1, find);
+    }
+}
+
+/********
  * FUNCIÓN: void parse_args(const char *args, char *parsed_args[], size_t parsed_args_size)
  * ARGS_IN: const char *args - Cadena de caracteres con los argumentos a parsear, char *parsed_args[] - Array de cadenas donde almacenar los argumentos parseados, size_t parsed_args_size - Tamaño del array parsed_args.
  * DESCRIPCIÓN: Tokeniza una cadena de argumentos delimitados por '&' y almacena cada argumento en un array de cadenas.
  * ARGS_OUT: Ninguno (void). Los argumentos tokenizados se almacenan en el array parsed_args.
  ********/
-void parse_args(const char *args, char *parsed_args[], size_t parsed_args_size)
-{
+void parse_args(const char *args, char *parsed_args[], size_t parsed_args_size) {
     char *args_copy = strdup(args); // Hacemos una copia de args porque strtok modifica la cadena original
     char *token = strtok(args_copy, "&");
     size_t i = 0;
-    while (token && i < parsed_args_size)
-    { // Ajuste para dejar espacio para el NULL final
+    while (token && i < parsed_args_size) { // Ajuste para dejar espacio para el NULL final
         char *value = strchr(token, '=');
-        if (value)
-        {
-            value++;
+        if (value) {
+            value++; // Nos movemos más allá del '='
+            replace_char(value, '+', ' '); // Reemplazamos '+' por espacios
             parsed_args[i] = strdup(value);
             i++;
         }
