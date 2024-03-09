@@ -19,13 +19,13 @@
  ********/
 void http_400(char *sv_name, struct TODO *task)
 {
-    char http_body[2048];
+    char http_body[512];
     char http_response[4096];
     char date[64];
 
     get_date(date);
     // Pagina de error 400
-    sprintf(http_body, "<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><title>400 Bad Request</title><style>body {font-family: Arial, sans-serif;text-align: center;padding: 50px;}h1 {font-size: 36px;margin-bottom: 20px;}p {font-size: 18px;margin-bottom: 20px;}</style></head><body><h1>400 Bad Request</h1><p>Your browser sent a request that this server could not understand.</p></body></html>");
+    read_file("root/templates/400.html", http_body, sizeof(http_body));
     snprintf(http_response, sizeof(http_response),
              "%s 400 Bad request\r\n"
              "Server: %s\r\n"
@@ -49,13 +49,13 @@ void http_400(char *sv_name, struct TODO *task)
  ********/
 void http_403(char *sv_name, struct TODO *task)
 {
-    char http_body[2048];
+    char http_body[512];
     char http_response[4096];
     char date[64];
 
     get_date(date);
     // Página de error 403
-    sprintf(http_body, "<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><title>403 Forbidden</title><style>body {font-family: Arial, sans-serif;text-align: center;padding: 50px;}h1 {font-size: 36px;margin-bottom: 20px;}p {font-size: 18px;margin-bottom: 20px;}</style></head><body><h1>403 Forbidden</h1><p>You don't have permission to access this resource.</p></body></html>");
+    read_file("root/templates/403.html", http_body, sizeof(http_body));
     snprintf(http_response, sizeof(http_response),
              "%s 403 Forbidden\r\n"
              "Server: %s\r\n"
@@ -79,15 +79,75 @@ void http_403(char *sv_name, struct TODO *task)
  ********/
 void http_404(char *sv_name, struct TODO *task)
 {
-    char http_body[2048];
+    char http_body[512];
     char http_response[4096];
     char date[64];
 
     get_date(date);
     // Página de error 404
-    sprintf(http_body, "<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><title>404 Not Found</title><style>body {font-family: Arial, sans-serif;text-align: center;padding: 50px;}h1 {font-size: 36px;margin-bottom: 20px;}p {font-size: 18px;margin-bottom: 20px;}</style></head><body><h1>404 Not Found</h1><p>The page you are looking for could not be found.</p></body></html>");
+    read_file("root/templates/404.html", http_body, sizeof(http_body));
     snprintf(http_response, sizeof(http_response),
              "%s 404 Not found\r\n"
+             "Server: %s\r\n"
+             "Date: %s\r\n"
+             "Content-Type: text/html; charset=UTF-8\r\n"
+             "Content-Length: %lu\r\n"
+             "Connection: close\r\n"
+             "\r\n"
+             "%s",
+             task->version, sv_name, date, strlen(http_body), http_body);
+    // Enviar respuesta
+    send(task->client_sock, http_response, strlen(http_response), 0);
+}
+
+/********
+ * FUNCIÓN: void http_500(char *sv_name, struct TODO *task)
+ * ARGS_IN: char *sv_name - nombre del servidor,
+ *         struct TODO *task - estructura de tarea con información sobre la petición.
+ * DESCRIPCIÓN: Envía una respuesta HTTP 500 Internal Server Error al cliente.
+ * ARGS_OUT: Ninguno (void).
+ * *******/
+void http_500(char *sv_name, struct TODO *task)
+{
+    char http_body[512];
+    char http_response[4096];
+    char date[64];
+
+    get_date(date);
+    // Página de error 500
+    read_file("root/templates/500.html", http_body, sizeof(http_body));
+    snprintf(http_response, sizeof(http_response),
+             "%s 500 Internal Server Error\r\n"
+             "Server: %s\r\n"
+             "Date: %s\r\n"
+             "Content-Type: text/html; charset=UTF-8\r\n"
+             "Content-Length: %lu\r\n"
+             "Connection: close\r\n"
+             "\r\n"
+             "%s",
+             task->version, sv_name, date, strlen(http_body), http_body);
+    // Enviar respuesta
+    send(task->client_sock, http_response, strlen(http_response), 0);
+}
+
+/********
+ * FUNCIÓN: void http_501(char *sv_name, struct TODO *task)
+ * ARGS_IN: char *sv_name - nombre del servidor,
+ *          struct TODO *task - estructura de tarea con información sobre la petición.
+ * DESCRIPCIÓN: Envía una respuesta HTTP 501 Not Implemented al cliente.
+ * ARGS_OUT: Ninguno (void).
+ ********/
+void http_501(char *sv_name, struct TODO *task)
+{
+    char http_body[512];
+    char http_response[4096];
+    char date[64];
+
+    get_date(date);
+    // Página de error 501
+    read_file("root/templates/501.html", http_body, sizeof(http_body));
+    snprintf(http_response, sizeof(http_response),
+             "%s 501 Not Implemented\r\n"
              "Server: %s\r\n"
              "Date: %s\r\n"
              "Content-Type: text/html; charset=UTF-8\r\n"
@@ -249,7 +309,7 @@ void send_http_response(struct TODO *task, struct ServerConfig config)
         method_options(config.sv_name, task);
         break;
     default:
-        http_400(config.sv_name, task);
+        http_501(config.sv_name, task);
         break;
     }
 }

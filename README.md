@@ -18,12 +18,10 @@
 
 'root' es una carpeta con los archivos multimedia y tests proporcionada en el enunciado para probar el funcionamiento del servidor.
 
-La carpeta 'root' debería descargarse y descomprimirse automáticamente, en caso de error, puede descargarla manualmente desde aquí: [Descargar zip](https://drive.google.com/file/d/1LK_43OcJHCGlp_0SoBFjFaF4b_THWigm/view?usp=sharing), asegúrese de descomprimir este '.zip' y que la carpeta descomprimida está a la altura del 'server.conf'.
+La carpeta 'root' debería descargarse y descomprimirse automáticamente, en caso de error, puede descargarla manualmente desde aquí: [Descargar zip](https://drive.google.com/file/d/1LhUs9MCOmtdufcc4ZkeL-WFc7f6ch0iN/view?usp=sharing), asegúrese de descomprimir este '.zip' y que la carpeta descomprimida está a la altura del 'server.conf'.
 
 ---
 
+- los '+' son espacios en la url
 - control parseo de peticiones (enunciado)
-- func execut script revisar a fondo task->data puede ser null (script sin arg)
-- Al fallar script servidor no responde
-- templates en vez de sprintf
-- control de errores http 500
+- ¿lanzar proceso para ejecutar scripts o mantener hilo?
