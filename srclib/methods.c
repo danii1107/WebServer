@@ -9,7 +9,7 @@
 #include "../includes/methods.h"
 
 // Funciones auxiliares privadas
-int scripts_aux(char *http_response, char *date, char *sv_name, struct TODO *task);
+STATUS scripts_aux(char *http_response, char *date, char *sv_name, struct TODO *task);
 
 /********
 * FUNCIÓN: int method_get(struct ServerConfig config, struct TODO *task)
@@ -19,42 +19,61 @@ int scripts_aux(char *http_response, char *date, char *sv_name, struct TODO *tas
 *              Si el URI incluye un script, lo ejecuta y devuelve su salida. Si es una solicitud de archivo,
 *              intenta abrir y enviar el archivo solicitado. Si los datos son innecesarios o el archivo no existe,
 *              puede retornar un error.
-* ARGS_OUT: int - Devuelve 0 en caso de éxito, -1 en caso de error al abrir el archivo o determinar el tipo de contenido.
+* ARGS_OUT: OK si todo ha ido bien, ERROR si se ha producido un error.
 ********/
-int  method_get(struct ServerConfig config, struct TODO *task) {
+STATUS  method_get(struct ServerConfig config, struct TODO *task) {
+
+    if(!config.sv_name || !task){
+        return ERROR;
+    }
+    
 	char http_response[16384];
     char date[64];
-    int unnecesary_args = 0, script = 0;
+    int script = 0;
     
     // Comprobar si es un script
     if (strstr(task->uri, ".py") || strstr(task->uri, ".php")) script = 1;
-
+    
     get_date(date);
     // Comprobar si es un script y ejecutarlo
-    if (script == 1) { 
-        scripts_aux(http_response, date, config.sv_name, task);
-    } else if (task->data[0]) unnecesary_args = 1; // No es script pero tiene args innecesarios
-
-    if ((unnecesary_args == 1) || !(task->data[0])) { // Si no hay datos o son innecesarios, buscar el archivo solicitado
+    if (script == 1) {
+        if (scripts_aux(http_response, date, config.sv_name, task) != OK)
+            return ERROR;
+    } else { // Si no hay datos o son innecesarios, buscar el archivo solicitado
         char content_type[64];
         if (get_content_type(task->uri, content_type) != 0)
-            return -1;
+            return ERROR;
 
         // Abre el archivo solicitado en modo de lectura
         FILE *file = fopen(task->uri, "rb");
         if (!file) {
             // Enviar una respuesta 404 Not Found si el archivo no existe
-            return -1;
+            return ERROR;
         }
         
         // Buscar el tamaño del archivo
-        fseek(file, 0, SEEK_END);
+        if (fseek(file, 0, SEEK_END) != 0) {
+            fclose(file);
+            return ERROR;
+        }
         long file_size = ftell(file);
+        if (file_size == -1) {
+            fclose(file);
+            return ERROR;
+        }
         rewind(file);
         
         // Leer el contenido del archivo
         char *file_content = malloc(file_size);
-        fread(file_content, file_size, 1, file);
+        if (!file_content) {
+            fclose(file);
+            return ERROR;
+        }
+        if((int) fread(file_content, file_size, 1, file) < 0){
+            free(file_content);
+            fclose(file);
+            return ERROR;
+        }
         fclose(file);
 
         // Preparar la cabecera HTTP
@@ -74,11 +93,11 @@ int  method_get(struct ServerConfig config, struct TODO *task) {
         send(task->client_sock, file_content, file_size, 0);
 
         if (file_content) free(file_content);
-        return 0;
+        return OK;
     }
     // Enviar respuesta si no se ha enviado ya
     send(task->client_sock, http_response, strlen(http_response), 0);
-    return 0;
+    return OK;
 }
 
 /********
@@ -86,17 +105,22 @@ int  method_get(struct ServerConfig config, struct TODO *task) {
 * ARGS_IN: struct ServerConfig config - Configuración del servidor,
 *          struct TODO *task - Tarea con información sobre la solicitud HTTP.
 * DESCRIPCIÓN: Maneja solicitudes POST. 
-* ARGS_OUT: int - Devuelve 0 en caso de éxito, -1 en caso de error al abrir el archivo o determinar el tipo de contenido.
+* ARGS_OUT: OK si todo ha ido bien, ERROR si se ha producido un error.
 ********/
-int method_post(struct ServerConfig config, struct TODO *task)
+STATUS method_post(struct ServerConfig config, struct TODO *task)
 {
+    if(!config.sv_name || !task){
+        return ERROR;
+    }
+    
     char http_response[5000];
     char date[64];
 
     get_date(date);
     // Comprobar si es un script y ejecutarlo
     if (strstr(task->uri, ".py") || strstr(task->uri, ".php")) {
-        scripts_aux(http_response, date, config.sv_name, task);
+        if (scripts_aux(http_response, date, config.sv_name, task) != OK)
+            return ERROR;
     } else { // Suponmos poder enviar un POST sin necesidad de ser un script, en servidores reales pueden ejecutarse estos post, 
             // en nuestro caso mandamos un mensaje de confirmación
         sprintf(http_response, "%s 200 OK\r\n"
@@ -111,7 +135,7 @@ int method_post(struct ServerConfig config, struct TODO *task)
     }
     // Enviar respuesta
     send(task->client_sock, http_response, strlen(http_response), 0);
-    return 0;
+    return OK;
 }
 
 /********
@@ -119,9 +143,14 @@ int method_post(struct ServerConfig config, struct TODO *task)
 * ARGS_IN: char *sv_name - Nombre del servidor,
 *          struct TODO *task - Tarea con información sobre la solicitud HTTP.
 * DESCRIPCIÓN: Maneja solicitudes OPTIONS, enviando una respuesta que lista los métodos HTTP permitidos (GET, POST, OPTIONS).
-* ARGS_OUT: Ninguno (void).
+* ARGS_OUT: OK si todo ha ido bien, ERROR si se ha producido un error.
 ********/
-void method_options(char *sv_name, struct TODO *task) {
+STATUS method_options(char *sv_name, struct TODO *task) {
+
+    if(!sv_name || !task){
+        return ERROR;
+    }
+    
 	char response[256];     
 	char date[64];
 
@@ -137,6 +166,7 @@ void method_options(char *sv_name, struct TODO *task) {
 					 "\n", task->version, sv_name, date);
     // Enviar respuesta
 	send(task->client_sock, response, strlen(response), 0);
+    return OK;
 }
 
 /********
@@ -146,22 +176,40 @@ void method_options(char *sv_name, struct TODO *task) {
 *          char *sv_name - Nombre del servidor
 *          struct TODO *task - Tarea con información sobre la solicitud HTTP.
 * DESCRIPCIÓN: Llama a la función execute_script para ejecutar el script solicitado y almacenar su salida en http_response.
-* ARGS_OUT: int - Devuelve 0 en caso de éxito, -1 en caso de error
+* ARGS_OUT: STATUS - OK si todo ha ido bien, ERROR si se ha producido un error.
 ********/
-int scripts_aux(char *http_response, char *date, char *sv_name, struct TODO *task)
+STATUS scripts_aux(char *http_response, char *date, char *sv_name, struct TODO *task)
 {
     char *script_output = NULL;
     ssize_t script_output_size = 0;
     size_t count = 0;
 
     // Reservar memoria para array de argumentos y tokenizarlos
-    for (int i = 0; task->data[i]; i++) {
-        if (task->data[i] == '&') count++;
+    if (task->data[0] != '\0')
+    {
+        for (int i = 0; task->data[i]; i++) {
+            if (task->data[i] == '&') count++;
+        }
+        char *parsed_args[count + 2];
+        if (parse_args(task->data, parsed_args, count + 1) != OK)
+            return ERROR;
+        if (execute_script(task->uri, parsed_args, &script_output, &script_output_size) != OK)
+        {
+            if (script_output) free(script_output);
+            return ERROR;
+        }
+        if (count > 0) {
+        for (size_t i = 0; parsed_args[i] != NULL; i++) {
+            free(parsed_args[i]);
+        }
     }
-    char *parsed_args[count + 2];
-    parse_args(task->data, parsed_args, count + 1);
-    execute_script(task->uri, parsed_args, &script_output, &script_output_size);
-
+    } else {
+        if (execute_script(task->uri, NULL, &script_output, &script_output_size) != OK)
+        {
+            if (script_output) free(script_output);
+            return ERROR;
+        }
+    }
     // Armar respuesta script
     sprintf(http_response, "%s 200 OK\r\n"
                     "Date: %s\r\n"
@@ -175,5 +223,5 @@ int scripts_aux(char *http_response, char *date, char *sv_name, struct TODO *tas
     
     if (script_output) free(script_output);
 
-    return 0;
+    return OK;
 }

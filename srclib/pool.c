@@ -100,7 +100,6 @@ STATUS initialize_thread_pool(struct Pool *pool)
     pool->active_threads = 0;
     for (int i = 0; i < pool->config.max_clients; i++)
     {
-        if (i == 2) break;
         int rc = pthread_create(&(pool->threads[i]), NULL, thread_function, pool);
         if (rc != 0)
         {

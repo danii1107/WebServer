@@ -95,7 +95,7 @@ int main()
     struct sigaction act = {0};
     int addrlen = 0;
     int server_fd = 0, new_socket = 0;
-    int pret = 0;
+    int pret = 0, control = 0;
     int bytesRead = 0;
     char buffer[BUFFER_SIZE] = {0};
 
@@ -104,6 +104,11 @@ int main()
 
     // Inicializar el log
     config.logFile = startLog("server.log");
+    if (config.logFile == NULL)
+    {
+        perror("startLog");
+        exit(EXIT_FAILURE);
+    }
     
     // Leer configuración del servidor
     if (read_server_config(&config) < 0)
@@ -161,7 +166,6 @@ int main()
         exit(EXIT_FAILURE);
     }
 
-    // intentar socket varias peticiones en lugar de socket por peticion
     while (!got_sigint)
     {
         // Aceptar una conexión
@@ -170,7 +174,7 @@ int main()
         {
             if (got_sigint)
                 break;
-            perror("accept");
+            writeToLog(config.logFile, "WARNING", "No se pudo aceptar la conexión", NULL);
             continue; // NO TIRAR EL SERVIDOR
         }
 
@@ -180,31 +184,43 @@ int main()
         {
             if (got_sigint)
                 break;
-            perror("recv");
-            continue; // NO TIAR EL SERVIDOR
+            writeToLog(config.logFile, "WARNING", "No se pudo recibir la petición", NULL);
+            control = 1; // Mandamos 500 pero no tiramos server
         }
 
-        // Preparar la tarea
-        task.client_sock = new_socket;
-        pret = parse_http_request(buffer, bytesRead, &task, config.logFile);
-
-        // Agregar tarea al pool
-        if (pret > 0)
+        if (control != 1) // Si se ha recibido bien la petición
         {
-            pthread_mutex_lock(&(pool.lock));   // Acceso zona crítica
-            pool.todo_q[pool.q_size++] = task;  // 'Push' cola de tareas
-            pthread_cond_signal(&(pool.cond));  // 'Flag' nueva task
-            pthread_mutex_unlock(&(pool.lock)); // Abrir mutex
-        }
+            // Preparar la tarea
+            task.client_sock = new_socket;
+            pret = parse_http_request(buffer, bytesRead, &task, config.logFile);
 
-        // Limpiar buffer para la próxima petición
-        memset((void *)buffer, 0, BUFFER_SIZE);
+            // Agregar tarea al pool
+            if (pret > 0)
+            {
+                pthread_mutex_lock(&(pool.lock));   // Acceso zona crítica
+                pool.todo_q[pool.q_size++] = task;  // 'Push' cola de tareas
+                pthread_cond_signal(&(pool.cond));  // 'Flag' nueva task
+                pthread_mutex_unlock(&(pool.lock)); // Abrir mutex
+            } else {
+                writeToLog(config.logFile, "WARNING", "No se pudo parsear la petición", NULL);
+                http_500(config.sv_name, new_socket);
+                close (new_socket);
+            }
+            // Limpiar buffer para la próxima petición
+            memset((void *)buffer, 0, BUFFER_SIZE);
+        }
+        else 
+        {
+            http_500(config.sv_name, new_socket);
+            close (new_socket);
+            control = 0;
+        }
     }
 
     // Cancelar todos los hilos y liberar recursos
     stop_thread_pool(&pool);
-    stopLog(config.logFile);
     writeToLog(config.logFile, "INFO", "Servidor finalizado", NULL);
+    stopLog(config.logFile);
     free(pool.threads);
     close(server_fd);
     exit(EXIT_SUCCESS);

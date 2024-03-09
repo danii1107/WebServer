@@ -8,6 +8,7 @@
 
 #include "types.h"
 #include "pool.h"
+#include "log.h"
 
 /********
 * FUNCIÓN: int get_verb(const char* verb)
@@ -29,9 +30,9 @@ void get_date(char *date);
 * FUNCIÓN: int get_content_type(char *uri, char *ct)
 * ARGS_IN: char *uri - URI del recurso solicitado, char *ct - Puntero a una cadena de caracteres donde almacenar el tipo de contenido.
 * DESCRIPCIÓN: Determina el tipo de contenido (MIME type) del recurso solicitado basándose en su extensión de archivo y lo almacena en ct.
-* ARGS_OUT: int - Devuelve 0 en caso de éxito, -1 si la extensión de archivo no es reconocida o si el recurso no tiene extensión.
+* ARGS_OUT: OK si el tipo de contenido se ha determinado con éxito, ERROR si no se ha podido determinar.
 ********/
-int get_content_type(char *uri, char *ct);
+STATUS get_content_type(char *uri, char *ct);
 
 /********
 * FUNCIÓN: int read_file(const char *path, char *buffer, size_t buffer_size)
@@ -45,16 +46,16 @@ int read_file(const char *path, char *buffer, size_t buffer_size);
 * FUNCIÓN: int execute_script(char *script_path, char *data[], char **response, ssize_t *response_size)
 * ARGS_IN: char *script_path - Ruta al script a ejecutar, char *data[] - Array de cadenas con los argumentos para el script, char **response - Puntero a una cadena donde almacenar la salida del script, ssize_t *response_size - Puntero a una variable donde almacenar el tamaño de la respuesta.
 * DESCRIPCIÓN: Ejecuta un script externo (Python o PHP), pasando los argumentos proporcionados y capturando su salida.
-* ARGS_OUT: int - Devuelve 0 en caso de éxito, -1 si ocurre un error durante la ejecución del script o la captura de su salida.
+* ARGS_OUT: OK si el script se ha ejecutado con éxito, ERROR si se ha producido un error.
 ********/
-int execute_script(char *script_path, char *data[], char **response, ssize_t *response_size);
+STATUS execute_script(char *script_path, char *data[], char **response, ssize_t *response_size);
 
 /********
 * FUNCIÓN: void parse_args(const char *args, char *parsed_args[], size_t parsed_args_size)
 * ARGS_IN: const char *args - Cadena de caracteres con los argumentos a parsear, char *parsed_args[] - Array de cadenas donde almacenar los argumentos parseados, size_t parsed_args_size - Tamaño del array parsed_args.
 * DESCRIPCIÓN: Tokeniza una cadena de argumentos delimitados por '&' y almacena cada argumento en un array de cadenas.
-* ARGS_OUT: Ninguno (void). Los argumentos tokenizados se almacenan en el array parsed_args.
+* ARGS_OUT: OK si todo ha ido bien, ERROR si se ha producido un error.
 ********/
-void parse_args(const char *args, char *parsed_args[], size_t parsed_args_size);
+STATUS parse_args(const char *args, char *parsed_args[], size_t parsed_args_size);
 
 #endif

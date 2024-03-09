@@ -16,6 +16,8 @@
  ********/
 int get_verb(const char *verb)
 {
+    if (!verb)
+        return -1;
     if (strcmp(verb, "GET") == 0)
         return 0;
     if (strcmp(verb, "POST") == 0)
@@ -41,15 +43,16 @@ void get_date(char *date)
  * FUNCIÓN: int get_content_type(char *uri, char *ct)
  * ARGS_IN: char *uri - URI del recurso solicitado, char *ct - Puntero a una cadena de caracteres donde almacenar el tipo de contenido.
  * DESCRIPCIÓN: Determina el tipo de contenido (MIME type) del recurso solicitado basándose en su extensión de archivo y lo almacena en ct.
- * ARGS_OUT: int - Devuelve 0 en caso de éxito, -1 si la extensión de archivo no es reconocida o si el recurso no tiene extensión.
+ * ARGS_OUT: OK si todo ha ido bien, ERROR si se ha producido un error.
  ********/
-int get_content_type(char *uri, char *ct)
+STATUS get_content_type(char *uri, char *ct)
 {
+    if(!uri || !ct)
+        return ERROR;
+
     char *ext = strrchr(uri, '.');
     if (!ext)
-    {
-        return -1;
-    }
+        return ERROR;
 
     if (strcmp(ext, ".html") == 0 || strcmp(ext, ".htm") == 0)
     {
@@ -81,10 +84,10 @@ int get_content_type(char *uri, char *ct)
     }
     else
     {
-        return -1;
+        return ERROR;
     }
 
-    return 0;
+    return OK;
 }
 
 /********
@@ -95,6 +98,9 @@ int get_content_type(char *uri, char *ct)
  ********/
 int read_file(const char *path, char *buffer, size_t buffer_size)
 {
+    if(!path)
+        return -1;
+
     FILE *file = fopen(path, "r");
     if (!file)
     {
@@ -112,12 +118,15 @@ int read_file(const char *path, char *buffer, size_t buffer_size)
  * DESCRIPCIÓN: Reemplaza todas las ocurrencias de un carácter en una cadena por otro carácter.
  * ARGS_OUT: Ninguno (void). La cadena de caracteres se modifica directamente.
  ********/
-void replace_char(char *str, char find, char replace) {
+STATUS replace_char(char *str, char find, char replace) {
+    if(!str || !find || !replace)
+        return ERROR;
     char *current_pos = strchr(str, find);
     while (current_pos) {
         *current_pos = replace;
         current_pos = strchr(current_pos + 1, find);
     }
+    return OK;
 }
 
 /********
@@ -126,7 +135,7 @@ void replace_char(char *str, char find, char replace) {
  * DESCRIPCIÓN: Tokeniza una cadena de argumentos delimitados por '&' y almacena cada argumento en un array de cadenas.
  * ARGS_OUT: Ninguno (void). Los argumentos tokenizados se almacenan en el array parsed_args.
  ********/
-void parse_args(const char *args, char *parsed_args[], size_t parsed_args_size) {
+STATUS parse_args(const char *args, char *parsed_args[], size_t parsed_args_size) {
     char *args_copy = strdup(args); // Hacemos una copia de args porque strtok modifica la cadena original
     char *token = strtok(args_copy, "&");
     size_t i = 0;
@@ -134,24 +143,29 @@ void parse_args(const char *args, char *parsed_args[], size_t parsed_args_size) 
         char *value = strchr(token, '=');
         if (value) {
             value++; // Nos movemos más allá del '='
-            replace_char(value, '+', ' '); // Reemplazamos '+' por espacios
+            if (replace_char(value, '+', ' ') != OK) // Reemplazamos '+' por espacios
+            {
+                free(args_copy);
+                return ERROR;
+            }
             parsed_args[i] = strdup(value);
             i++;
         }
         token = strtok(NULL, "&");
     }
     parsed_args[i] = NULL; // Asegurarse de que el array termine en NULL
-
-    free(args_copy); // Liberamos la copia de args
+    
+    //free(args_copy); // Liberamos la copia de args
+    return OK;
 }
 
 /********
  * FUNCIÓN: int execute_script(char *script_path, char *data[], char **response, ssize_t *response_size)
  * ARGS_IN: char *script_path - Ruta al script a ejecutar, char *data[] - Array de cadenas con los argumentos para el script, char **response - Puntero a una cadena donde almacenar la salida del script, ssize_t *response_size - Puntero a una variable donde almacenar el tamaño de la respuesta.
  * DESCRIPCIÓN: Ejecuta un script externo (Python o PHP), pasando los argumentos proporcionados y capturando su salida.
- * ARGS_OUT: int - Devuelve 0 en caso de éxito, -1 si ocurre un error durante la ejecución del script o la captura de su salida.
+ * ARGS_OUT: OK si todo ha ido bien, ERROR si se ha producido un error.
  ********/
-int execute_script(char *script_path, char *data[], char **response, ssize_t *response_size)
+STATUS execute_script(char *script_path, char *data[], char **response, ssize_t *response_size)
 {
     int pipefd[2];
     char executable[10];
@@ -160,14 +174,14 @@ int execute_script(char *script_path, char *data[], char **response, ssize_t *re
     if (pipe(pipefd) == -1)
     {
         perror("pipe");
-        exit(EXIT_FAILURE);
+        return ERROR;
     }
 
     pid = fork();
     if (pid == -1)
     {
         perror("fork");
-        exit(EXIT_FAILURE);
+        return ERROR;
     }
     if (pid == 0)
     {
@@ -185,10 +199,10 @@ int execute_script(char *script_path, char *data[], char **response, ssize_t *re
         {
             strcpy(executable, "php");
         }
-
-        size_t data_count;
-        for (data_count = 0; data[data_count]; data_count++)
-            ;
+        
+        size_t data_count = 0;
+        if (data)
+            for (data_count = 0; data[data_count]; data_count++);
 
         // Reservar espacio para el nombre del ejecutable, script_path, argumentos, y NULL
         char *argv[data_count + 3];
@@ -197,9 +211,7 @@ int execute_script(char *script_path, char *data[], char **response, ssize_t *re
 
         // Llenar argv con los argumentos
         for (size_t i = 0; i < data_count; i++)
-        {
             argv[i + 2] = data[i];
-        }
         argv[data_count + 2] = NULL; // Terminar argv con NULL
 
         execvp(executable, argv);
@@ -240,8 +252,7 @@ int execute_script(char *script_path, char *data[], char **response, ssize_t *re
             return WEXITSTATUS(status);
         }
         else
-        {
-            return -1;
-        }
+            return ERROR;
     }
+    return OK;
 }

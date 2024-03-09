@@ -19,7 +19,7 @@ FILE* startLog(const char *logPath) {
 
 /********
  * FUNCIÓN: void writeToLog(FILE* logFile, const char *level, const char *message)
- * ARGS_IN: char FILE* logFile - Puntero al fichero de log, const char *level - Nivel de log (INFO, WARNING, ERROR), const char *message - Mensaje a escribir en el log
+ * ARGS_IN: char FILE* logFile - Puntero al fichero de log, const char *level - Nivel de log (INFO, REQUEST, WARNING, ERROR), const char *message - Mensaje a escribir en el log
  * DESCRIPCIÓN: Escribe un mensaje en el fichero de log, con el nivel de log especificado, si pool es NULL no es un hilo, no usamos semáforos
  * ARGS_OUT: -
  ********/

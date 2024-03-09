@@ -19,9 +19,12 @@
  ********/
 void http_400(char *sv_name, struct TODO *task)
 {
-    char http_body[512];
-    char http_response[4096];
-    char date[64];
+    if(!sv_name || !task)
+        return;
+
+    char http_body[512] = {0};
+    char http_response[4096] = {0};
+    char date[64] = {0};
 
     get_date(date);
     // Pagina de error 400
@@ -49,9 +52,12 @@ void http_400(char *sv_name, struct TODO *task)
  ********/
 void http_403(char *sv_name, struct TODO *task)
 {
-    char http_body[512];
-    char http_response[4096];
-    char date[64];
+    if(!sv_name || !task)
+        return;
+
+    char http_body[512] = {0};
+    char http_response[4096] = {0};
+    char date[64] = {0};
 
     get_date(date);
     // Página de error 403
@@ -79,9 +85,12 @@ void http_403(char *sv_name, struct TODO *task)
  ********/
 void http_404(char *sv_name, struct TODO *task)
 {
-    char http_body[512];
-    char http_response[4096];
-    char date[64];
+    if(!sv_name || !task)
+        return;
+
+    char http_body[512] = {0};
+    char http_response[4096] = {0};
+    char date[64] = {0};
 
     get_date(date);
     // Página de error 404
@@ -101,23 +110,26 @@ void http_404(char *sv_name, struct TODO *task)
 }
 
 /********
- * FUNCIÓN: void http_500(char *sv_name, struct TODO *task)
+ * FUNCIÓN: void http_500(char *sv_name, int client_fd)
  * ARGS_IN: char *sv_name - nombre del servidor,
- *         struct TODO *task - estructura de tarea con información sobre la petición.
+ *         int client_fd - descriptor de archivo del socket del cliente.
  * DESCRIPCIÓN: Envía una respuesta HTTP 500 Internal Server Error al cliente.
  * ARGS_OUT: Ninguno (void).
  * *******/
-void http_500(char *sv_name, struct TODO *task)
+void http_500(char *sv_name, int client_fd)
 {
-    char http_body[512];
-    char http_response[4096];
-    char date[64];
+    if(!sv_name || client_fd <= 0)
+        return;
+
+    char http_body[512] = {0};
+    char http_response[4096] = {0};
+    char date[64] = {0};
 
     get_date(date);
     // Página de error 500
     read_file("root/templates/500.html", http_body, sizeof(http_body));
     snprintf(http_response, sizeof(http_response),
-             "%s 500 Internal Server Error\r\n"
+             "HTTP/1.1 500 Internal Server Error\r\n"
              "Server: %s\r\n"
              "Date: %s\r\n"
              "Content-Type: text/html; charset=UTF-8\r\n"
@@ -125,9 +137,9 @@ void http_500(char *sv_name, struct TODO *task)
              "Connection: close\r\n"
              "\r\n"
              "%s",
-             task->version, sv_name, date, strlen(http_body), http_body);
+             sv_name, date, strlen(http_body), http_body);
     // Enviar respuesta
-    send(task->client_sock, http_response, strlen(http_response), 0);
+    send(client_fd, http_response, strlen(http_response), 0);
 }
 
 /********
@@ -139,9 +151,12 @@ void http_500(char *sv_name, struct TODO *task)
  ********/
 void http_501(char *sv_name, struct TODO *task)
 {
-    char http_body[512];
-    char http_response[4096];
-    char date[64];
+    if(!sv_name || !task)
+        return;
+
+    char http_body[512] = {0};
+    char http_response[4096] = {0};
+    char date[64] = {0};
 
     get_date(date);
     // Página de error 501
@@ -170,6 +185,9 @@ void http_501(char *sv_name, struct TODO *task)
  ********/
 int parse_http_request(const char *buffer, size_t buflen, struct TODO *task, FILE *logFile)
 {
+    if(!task || !logFile || !buffer || !buflen)
+        return 0;
+        
     const char *method, *path;
     int minor_version;
     struct phr_header headers[100];
@@ -255,6 +273,9 @@ int parse_http_request(const char *buffer, size_t buflen, struct TODO *task, FIL
 ********/
 void send_http_response(struct TODO *task, struct ServerConfig config)
 {
+    if(!task || !config.sv_name || !config.root)
+        return;
+    
     int verb;
 
     // Comprobar que la petición no intente acceder a directorios fuera de root
@@ -286,21 +307,24 @@ void send_http_response(struct TODO *task, struct ServerConfig config)
     switch (verb)
     {
     case 0: // GET
-        if (method_get(config, task) < 0)
+        if (method_get(config, task) != OK)
         {
             http_404(config.sv_name, task);
         }
         break;
     case 1: // POST
-        if (task->data[0] == '\0' || method_post(config, task) < 0)
+        if (task->data[0] == '\0' || method_post(config, task) != OK)
         {
             http_400(config.sv_name, task);
         }
         break;
     case 2: // OPTIONS
-        method_options(config.sv_name, task);
+        if (method_options(config.sv_name, task) != OK)
+        {
+            http_400(config.sv_name, task);
+        }
         break;
-    default:
+    default: // Otro verbo
         http_501(config.sv_name, task);
         break;
     }

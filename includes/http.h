@@ -35,4 +35,13 @@ int parse_http_request(const char* buffer, size_t buflen, struct TODO* todo, FIL
 ********/
 void send_http_response(struct TODO *task, struct ServerConfig config);
 
+/********
+ * FUNCIÓN: void http_500(char *sv_name, int client_fd)
+ * ARGS_IN: char *sv_name - nombre del servidor,
+ *         int client_fd - descriptor de archivo del socket del cliente.
+ * DESCRIPCIÓN: Envía una respuesta HTTP 500 Internal Server Error al cliente.
+ * ARGS_OUT: Ninguno (void).
+ * *******/
+void http_500(char *sv_name, int client_fd);
+
 #endif

@@ -1,4 +1,5 @@
 CC=gcc
+DEBUG=gdb
 CFLAGS=-Iincludes -Wall -Wextra -Werror -pedantic #-fsanitize=address -g3
 DEPS = includes/http.h includes/methods.h includes/pool.h includes/utils.h includes/picohttpparser.h includes/types.h includes/sockets.h includes/log.h
 OBJDIR = obj
@@ -13,7 +14,7 @@ ZIP_URL=https://github.com/alber1997/AUXFOLDER/raw/main/root.zip
 ZIP_FILE=root.zip
 UNZIP_DIR=root
 
-all: verificar_root_o_zip descomprimir_zip libpicohttpparser libpers server clean
+all: verificar_root_o_zip descomprimir_zip libpicohttpparser libpers server
 
 verificar_root_o_zip:
 	@if [ -d $(UNZIP_DIR) ]; then \
@@ -59,4 +60,4 @@ valgrind:
 	valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./server || true
 
 clean:
-	rm -f $(OBJDIR)/*.o $(LIBDIR)/*.a $(ZIP_FILE)
+	rm -f server $(OBJDIR)/*.o $(LIBDIR)/*.a $(ZIP_FILE)
