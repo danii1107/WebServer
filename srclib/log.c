@@ -1,5 +1,7 @@
 #include "../includes/log.h"
 
+int isLogFileOpen = 0;
+
 /********
  * FUNCIÓN: FILE* startLog(const char *logPath) 
  * DESCRIPCIÓN: Abre un fichero de log en modo escritura, si no existe lo crea.
@@ -11,25 +13,30 @@ FILE* startLog(const char *logPath) {
         perror("Error opening log file");
         return NULL;
     }
+    isLogFileOpen = 1;
 	return logFile;
 }
 
 /********
  * FUNCIÓN: void writeToLog(FILE* logFile, const char *level, const char *message)
  * ARGS_IN: char FILE* logFile - Puntero al fichero de log, const char *level - Nivel de log (INFO, WARNING, ERROR), const char *message - Mensaje a escribir en el log
- * DESCRIPCIÓN: Escribe un mensaje en el fichero de log, con el nivel de log especificado.
+ * DESCRIPCIÓN: Escribe un mensaje en el fichero de log, con el nivel de log especificado, si pool es NULL no es un hilo, no usamos semáforos
  * ARGS_OUT: -
  ********/
-void writeToLog(FILE* logFile, const char *level, const char *message) {
+void writeToLog(FILE* logFile, const char *level, const char *message, struct Pool *pool) {
     time_t now;
     time(&now);
     char *timeStr = ctime(&now);
     timeStr[strlen(timeStr) - 1] = '\0';
-    if (strcmp(level, "REQUEST") == 0)
-        fprintf(logFile, "[%s] \n%s\n", timeStr, message);
-    else
-        fprintf(logFile, "[%s] %s: %s\n", timeStr, level, message);
-    fflush(logFile);
+    if (isLogFileOpen == 1 && logFile != NULL) {
+        if (pool) pthread_mutex_lock(&(pool->logMutex));
+        if (strcmp(level, "REQUEST") == 0)
+            fprintf(logFile, "[%s] \n%s\n", timeStr, message);
+        else
+            fprintf(logFile, "[%s] %s: %s\n", timeStr, level, message);
+        fflush(logFile);
+        if (pool) pthread_mutex_unlock(&(pool->logMutex));
+    }
 }
 
 /********
@@ -39,5 +46,9 @@ void writeToLog(FILE* logFile, const char *level, const char *message) {
  * ARGS_OUT: -
  ********/
 void stopLog(FILE* logFile) {
-    fclose(logFile);
+    if (isLogFileOpen == 1 && logFile != NULL) {
+        fclose(logFile);
+        logFile = NULL;
+        isLogFileOpen = 0;
+    }
 }

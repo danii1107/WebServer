@@ -26,14 +26,14 @@ int make_connection(struct sockaddr_in *address, struct ServerConfig config)
     // Crear descriptor de archivo para el socket
     if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0)
     {
-        perror("socket failed");
+        writeToLog(config.logFile, "ERROR", "Error al crear el socket\n", NULL);
         return -1;
     }
 
     // Adjuntar el socket al puerto
     if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)))
     {
-        perror("setsockopt");
+        writeToLog(config.logFile, "ERROR", "Error al adjuntar el socket al puerto\n", NULL);
         return -1;
     }
 
@@ -45,14 +45,14 @@ int make_connection(struct sockaddr_in *address, struct ServerConfig config)
     // Vincular el socket al puerto
     if (bind(server_fd, (struct sockaddr *)address, sizeof(*address)) < 0)
     {
-        perror("bind failed");
+        writeToLog(config.logFile, "ERROR", "Error al vincular el socket al puerto\n", NULL);
         return -1;
     }
 
     // Poner el servidor a escuchar conexiones
     if (listen(server_fd, 64) < 0)
     {
-        perror("listen");
+        writeToLog(config.logFile, "ERROR", "Error al poner el servidor a escuchar conexiones\n", NULL);
         return -1;
     }
 
@@ -60,7 +60,7 @@ int make_connection(struct sockaddr_in *address, struct ServerConfig config)
     fprintf(stdout, "----Para detener el servidor use Ctrl+C----\n");
     fprintf(stdout, "----El servidor registra actividad en server.log----\n");
     fprintf(stdout, "----Escuchando en [%s:%d]----\n\n", inet_ntoa(address->sin_addr), ntohs(address->sin_port));
-    writeToLog(config.logFile, "INFO", "Servidor iniciado\n");
+    writeToLog(config.logFile, "INFO", "Servidor iniciado\n", NULL);
 
     return server_fd;
 }

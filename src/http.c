@@ -235,7 +235,7 @@ int parse_http_request(const char *buffer, size_t buflen, struct TODO *task, FIL
         }
 
         // Mostrar petición en consola del servidor
-        writeToLog(logFile, "REQUEST", buffer);
+        writeToLog(logFile, "REQUEST", buffer, NULL);
 
         return 1; // Éxito
     }

@@ -11,6 +11,7 @@
 #include "picohttpparser.h"
 #include "methods.h"
 #include "pool.h"
+#include "log.h"
 
 /********
  * FUNCIÓN: int parse_http_request(const char* buffer, size_t buflen, struct TODO* task)

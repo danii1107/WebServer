@@ -31,4 +31,9 @@ struct ServerConfig {
 	FILE *logFile;
 };
 
+typedef enum Status {
+	OK,
+	ERROR
+} STATUS;
+
 #endif

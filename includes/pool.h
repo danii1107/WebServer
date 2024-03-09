@@ -28,6 +28,8 @@ struct Pool {
     pthread_mutex_t lock;            // Mutex para la cola dew tareas
     pthread_cond_t cond;             // Detectan la cola vacia y no lamnza hilos
     volatile sig_atomic_t shutdown;  // Flag para terminar hilos
+    int active_threads;              // Hilos activos
+    pthread_mutex_t logMutex;        // Mutex para el log
 };
 
 /********
@@ -38,6 +40,14 @@ struct Pool {
 *              asignándoles la función thread_function para su ejecución.
 * ARGS_OUT: Ninguno (void).
 ********/
-void initialize_thread_pool(struct Pool *pool);
+STATUS initialize_thread_pool(struct Pool *pool);
+
+/********
+ * FUNCIÓN: void stop_thread_pool(struct Pool* pool)
+ * ARGS_IN: struct Pool *pool - Puntero a la estructura Pool
+ * DESCRIPCIÓN: Detiene el pool de hilos, cancelando todos los hilos y liberando los recursos asociados.
+ * ARGS_OUT: -
+ ********/
+void stop_thread_pool(struct Pool *pool);
 
 #endif

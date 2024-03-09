@@ -88,13 +88,13 @@ int read_server_config(struct ServerConfig *config)
  ********/
 int main()
 {
-    struct Pool pool;
-    struct TODO task;
-    struct ServerConfig config;
-    struct sockaddr_in address;
-    struct sigaction act;
+    struct Pool pool = {0};
+    struct TODO task = {0};
+    struct ServerConfig config = {0};
+    struct sockaddr_in address = {0};
+    struct sigaction act = {0};
     int addrlen = 0;
-    int server_fd, new_socket;
+    int server_fd = 0, new_socket = 0;
     int pret = 0;
     int bytesRead = 0;
     char buffer[BUFFER_SIZE] = {0};
@@ -102,18 +102,28 @@ int main()
     // Asignar el puntero global a la estructura pool para controlar sigint
     pool_ptr = &pool;
 
+    // Inicializar el log
+    config.logFile = startLog("server.log");
+    
     // Leer configuración del servidor
     if (read_server_config(&config) < 0)
     {
+        writeToLog(config.logFile, "ERROR", "No se pudo leer el archivo de configuración", NULL);  
         exit(EXIT_FAILURE);
     }
 
-    config.logFile = startLog("server.log");
+    // Validar configuración
+    if (config.port <= 1023 || config.max_clients <= 0 || strcmp(config.sv_name, "") == 0 || strcmp(config.root, "root") != 0)
+    {
+        writeToLog(config.logFile, "ERROR", "Configuración inválida", NULL);
+        exit(EXIT_FAILURE);
+    }
 
     // Crear y conectar socket
     server_fd = make_connection(&address, config);
     if (server_fd < 0)
     {
+        writeToLog(config.logFile, "ERROR", "No se pudo crear el socket", NULL);
         exit(EXIT_FAILURE);
     }
     addrlen = sizeof(address);
@@ -124,7 +134,9 @@ int main()
     act.sa_flags = 0;
     if (sigaction(SIGINT, &act, NULL) < 0)
     {
-        perror("sigaction");
+        writeToLog(config.logFile, "ERROR", "No se pudo establecer el manejador de señal", NULL);
+        close(server_fd);
+        stopLog(config.logFile);
         exit(EXIT_FAILURE);
     }
 
@@ -133,10 +145,21 @@ int main()
     pool.threads = (pthread_t *)malloc(config.max_clients * sizeof(pthread_t));
     if (!pool.threads)
     {
-        perror("malloc");
+        writeToLog(config.logFile, "ERROR", "No se pudo reservar memoria para los hilos", NULL);
+        close(server_fd);
+        stopLog(config.logFile);
         exit(EXIT_FAILURE);
     }
-    initialize_thread_pool(&pool);
+
+    // Crear el pool de hilos
+    if (initialize_thread_pool(&pool) != OK)
+    {
+        writeToLog(config.logFile, "ERROR", "No se pudo inicializar el pool de hilos", NULL);
+        close(server_fd);
+        free(pool.threads);
+        stopLog(config.logFile);
+        exit(EXIT_FAILURE);
+    }
 
     // intentar socket varias peticiones en lugar de socket por peticion
     while (!got_sigint)
@@ -179,16 +202,9 @@ int main()
     }
 
     // Cancelar todos los hilos y liberar recursos
-    for (int i = 0; i < config.max_clients; i++)
-    {
-        pthread_cancel(pool.threads[i]);
-        pthread_join(pool.threads[i], NULL);
-    }
-    pthread_mutex_destroy(&(pool.lock));
-    pthread_cond_destroy(&(pool.cond));
-
+    stop_thread_pool(&pool);
     stopLog(config.logFile);
-    writeToLog(config.logFile, "INFO", "Servidor finalizado");
+    writeToLog(config.logFile, "INFO", "Servidor finalizado", NULL);
     free(pool.threads);
     close(server_fd);
     exit(EXIT_SUCCESS);
