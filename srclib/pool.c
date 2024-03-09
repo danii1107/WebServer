@@ -132,11 +132,11 @@ STATUS initialize_thread_pool(struct Pool *pool)
  ********/
 void stop_thread_pool(struct Pool *pool)
 {
+    pthread_cond_broadcast(&(pool->cond));
+
     for (int i = 0; i < pool->active_threads; i++)
-    {
-        pthread_cancel(pool->threads[i]);
         pthread_join(pool->threads[i], NULL);
-    }
+    
     pthread_mutex_destroy(&(pool->lock));
     pthread_mutex_destroy(&(pool->logMutex));
     pthread_cond_destroy(&(pool->cond));

@@ -185,7 +185,7 @@ STATUS scripts_aux(char *http_response, char *date, char *sv_name, struct TODO *
     size_t count = 0;
 
     // Reservar memoria para array de argumentos y tokenizarlos
-    if (task->data[0] != '\0')
+    if (task->data[0] != '\0') // Script con args
     {
         for (int i = 0; task->data[i]; i++) {
             if (task->data[i] == '&') count++;
@@ -196,14 +196,19 @@ STATUS scripts_aux(char *http_response, char *date, char *sv_name, struct TODO *
         if (execute_script(task->uri, parsed_args, &script_output, &script_output_size) != OK)
         {
             if (script_output) free(script_output);
+            int i = 0;
+            while (parsed_args[i] != NULL) {
+                free(parsed_args[i]);
+                i++;
+            }
             return ERROR;
         }
-        if (count > 0) {
-        for (size_t i = 0; parsed_args[i] != NULL; i++) {
+        int i = 0;
+        while (parsed_args[i] != NULL) {
             free(parsed_args[i]);
+            i++;
         }
-    }
-    } else {
+    } else { // Script sin args
         if (execute_script(task->uri, NULL, &script_output, &script_output_size) != OK)
         {
             if (script_output) free(script_output);

@@ -116,7 +116,7 @@ int read_file(const char *path, char *buffer, size_t buffer_size)
  * FUNCIÓN: void replace_char(char *str, char find, char replace)
  * ARGS_IN: char *str - Cadena de caracteres donde reemplazar el carácter, char find - Carácter a reemplazar, char replace - Carácter por el que reemplazar.
  * DESCRIPCIÓN: Reemplaza todas las ocurrencias de un carácter en una cadena por otro carácter.
- * ARGS_OUT: Ninguno (void). La cadena de caracteres se modifica directamente.
+ * ARGS_OUT: STATUS - OK si todo ha ido bien, ERROR si se ha producido un error.
  ********/
 STATUS replace_char(char *str, char find, char replace) {
     if(!str || !find || !replace)
@@ -133,7 +133,7 @@ STATUS replace_char(char *str, char find, char replace) {
  * FUNCIÓN: void parse_args(const char *args, char *parsed_args[], size_t parsed_args_size)
  * ARGS_IN: const char *args - Cadena de caracteres con los argumentos a parsear, char *parsed_args[] - Array de cadenas donde almacenar los argumentos parseados, size_t parsed_args_size - Tamaño del array parsed_args.
  * DESCRIPCIÓN: Tokeniza una cadena de argumentos delimitados por '&' y almacena cada argumento en un array de cadenas.
- * ARGS_OUT: Ninguno (void). Los argumentos tokenizados se almacenan en el array parsed_args.
+ * ARGS_OUT: STATUS - OK si todo ha ido bien, ERROR si se ha producido un error.
  ********/
 STATUS parse_args(const char *args, char *parsed_args[], size_t parsed_args_size) {
     char *args_copy = strdup(args); // Hacemos una copia de args porque strtok modifica la cadena original
@@ -155,7 +155,7 @@ STATUS parse_args(const char *args, char *parsed_args[], size_t parsed_args_size
     }
     parsed_args[i] = NULL; // Asegurarse de que el array termine en NULL
     
-    //free(args_copy); // Liberamos la copia de args
+    free(args_copy); // Liberamos la copia de args
     return OK;
 }
 

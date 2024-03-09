@@ -57,7 +57,7 @@ debug:
 	$(DEBUG) server
 
 valgrind:
-	valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./server || true
+	valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./server
 
 clean:
 	rm -f server $(OBJDIR)/*.o $(LIBDIR)/*.a $(ZIP_FILE)
