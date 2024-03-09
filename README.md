@@ -19,9 +19,3 @@
 'root' es una carpeta con los archivos multimedia y tests proporcionada en el enunciado para probar el funcionamiento del servidor.
 
 La carpeta 'root' debería descargarse y descomprimirse automáticamente, en caso de error, puede descargarla manualmente desde aquí: [Descargar zip](https://drive.google.com/file/d/1LhUs9MCOmtdufcc4ZkeL-WFc7f6ch0iN/view?usp=sharing), asegúrese de descomprimir este '.zip' y que la carpeta descomprimida está a la altura del 'server.conf'.
-
----
-
-- los '+' son espacios en la url
-- control parseo de peticiones (enunciado)
-- ¿lanzar proceso para ejecutar scripts o mantener hilo?

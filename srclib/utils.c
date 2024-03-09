@@ -29,7 +29,6 @@ int get_verb(const char *verb)
  * FUNCIÓN: void get_date(char *date)
  * ARGS_IN: char *date - Puntero a una cadena de caracteres donde almacenar la fecha actual.
  * DESCRIPCIÓN: Obtiene la fecha y hora actuales en formato GMT y las escribe en la cadena de caracteres apuntada por date.
- * ARGS_OUT: Ninguno (void). La fecha y hora se almacenan en la cadena de caracteres apuntada por date.
  ********/
 void get_date(char *date)
 {
