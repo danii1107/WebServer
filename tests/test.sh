@@ -1,38 +1,16 @@
 #!/bin/bash
 
-cd ../
-make
+# Este script realiza peticiones al servidor para medir los tiempos de respuesta para un número determinado de peticiones.
 
-./server &
+# Configuración
+HOST="0.0.0.0"
+PORT=8080
+NUM_REQUESTS=1000
 
-SERVER_PID=$!
-
-# Array para almacenar los PIDs de los clientes
-declare -a CLIENT_PIDS
-
-# Ejecutar el cliente 100 veces con mensajes diferentes
-for i in {1..100}; do
-    ./client &
-    CLIENT_PIDS+=($!)
+# Bucle para hacer peticiones
+for (( i=0; i<$NUM_REQUESTS; i++ ))
+do
+  echo -n "Esta es una petición de prueba" | curl -s -o /dev/null "$HOST:$PORT"
 done
 
-# Esperar un poco para que todos los clientes puedan conectarse
-sleep 0.5
-
-sleep 3
-
-echo "El servidor está soportando $i conexiones simultáneas"
-
-# Matar procesos cliente
-for PID in "${CLIENT_PIDS[@]}"; do
-    kill -s SIGINT $PID
-done
-
-sleep 0.25
-
-sleep 0.5
-# Matar el proceso del servidor al finalizar
-kill -s SIGINT $SERVER_PID
-
-make clean
-
+echo "Se enviaron $NUM_REQUESTS peticiones a $HOST:$PORT"

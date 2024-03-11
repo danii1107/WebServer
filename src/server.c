@@ -165,7 +165,11 @@ int main()
         stopLog(config.logFile);
         exit(EXIT_FAILURE);
     }
-
+    
+    /* time_t startTime;
+    int requestCount = 0;
+    double elapsed = 0.0; */
+    // startTime = time(NULL); // Descomentar script sh
     while (!got_sigint)
     {
         // Aceptar una conexión
@@ -208,6 +212,12 @@ int main()
             }
             // Limpiar buffer para la próxima petición
             memset((void *)buffer, 0, BUFFER_SIZE);
+            // Descomentar script sh
+            /* requestCount++;
+            time_t currentTime = time(NULL);
+            elapsed = difftime(currentTime, startTime);
+            if (requestCount == 1000)
+                break; */
         }
         else 
         {
@@ -216,6 +226,8 @@ int main()
             control = 0;
         }
     }
+
+    // printf("Peticiones procesadas: %d, Tiempo transcurrido: %.2f segundos\n", requestCount, elapsed); // Descomentar script sh
 
     // Cancelar todos los hilos y liberar recursos
     stop_thread_pool(&pool);

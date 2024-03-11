@@ -60,7 +60,7 @@ int make_connection(struct sockaddr_in *address, struct ServerConfig config)
     fprintf(stdout, "----Para detener el servidor use Ctrl+C----\n");
     fprintf(stdout, "----El servidor registra actividad en server.log----\n");
     fprintf(stdout, "----Escuchando en [%s:%d]----\n\n", inet_ntoa(address->sin_addr), ntohs(address->sin_port));
-    writeToLog(config.logFile, "INFO", "Servidor iniciado", NULL);
+    writeToLog(config.logFile, "INFO", "Servidor iniciado\n", NULL);
 
     return server_fd;
 }
