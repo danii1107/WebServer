@@ -12,7 +12,7 @@
 6. Se crea un fichero *server.log* donde se registra todo lo sucedido internamente en el servidor.
 7. `make clean` borrará el ejecutable y root.zip (además de objetos y librerías estáticas) pero no borrará la carpeta descomprimida de pruebas ni el *sever.log*, puede borrar ambos archivos con `rm -rf root` y `rm -rf sever.log` respectivamente.
 8. El servidor soporta la ejecución de scripts en Python y PHP, sin embargo, los intérpretes deben estar instalados en su sistema.
-9. Se pone a su disposición un script en bash para probar el estrés del servidor enviando peticiones al mismo, para ejecutarlo, descomente en *server.c* las líneas 169-171, 183, 216-220 y 230, compile y ejecute el servidor como se ha mencionado antes, ahora, ejecute `./test.sh`.
+9. En el index del servidor verá dos scripts creados por nosotros, donde puede introducir los datos, para el GET un nombre, y para el POST, una temperatura Celsius.
 
 ---
 
@@ -20,4 +20,4 @@
 
 'root' es una carpeta con los archivos multimedia y tests proporcionada en el enunciado para probar el funcionamiento del servidor.
 
-La carpeta 'root' debería descargarse y descomprimirse automáticamente, en caso de error, puede descargarla manualmente desde aquí: [Descargar zip](https://drive.google.com/file/d/1LhUs9MCOmtdufcc4ZkeL-WFc7f6ch0iN/view?usp=sharing), asegúrese de descomprimir este '.zip' y que la carpeta descomprimida está a la altura del 'server.conf'.
+La carpeta 'root' debería descargarse y descomprimirse automáticamente, en caso de error, puede descargarla manualmente desde aquí: [Descargar zip](https://drive.google.com/file/d/1iJrPAn8yQjVflkNlOrujgI9DpgBLNriV/view?usp=sharing), asegúrese de descomprimir este '.zip' y que la carpeta descomprimida está a la altura del 'server.conf'.

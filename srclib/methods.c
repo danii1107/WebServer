@@ -9,7 +9,7 @@
 #include "../includes/methods.h"
 
 // Funciones auxiliares privadas
-STATUS scripts_aux(int method, char *http_response, char *date, char *sv_name, struct TODO *task);
+int scripts_aux(int method, char *http_response, char *date, char *sv_name, struct TODO *task);
 
 /********
 * FUNCIÓN: int method_get(struct ServerConfig config, struct TODO *task)
@@ -36,10 +36,11 @@ STATUS  method_get(struct ServerConfig config, struct TODO *task) {
     if (strstr(task->uri, ".py") || strstr(task->uri, ".php")) script = 1;
     
     get_date(date);
+    int ret = 0;
     // Comprobar si es un script y ejecutarlo
     if (script == 1) {
-        if (scripts_aux(0, http_response, date, config.sv_name, task) != OK)
-            return ERROR;
+        if ((ret = scripts_aux(0, http_response, date, config.sv_name, task)) != 0)
+            return ret;
     } else { // Si no hay datos o son innecesarios, buscar el archivo solicitado
         char content_type[64];
         if (get_content_type(task->uri, content_type) != 0)
@@ -179,9 +180,9 @@ STATUS method_options(char *sv_name, struct TODO *task) {
 *          char *sv_name - Nombre del servidor
 *          struct TODO *task - Tarea con información sobre la solicitud HTTP.
 * DESCRIPCIÓN: Llama a la función execute_script para ejecutar el script solicitado y almacenar su salida en http_response.
-* ARGS_OUT: STATUS - OK si todo ha ido bien, ERROR si se ha producido un error.
+* ARGS_OUT: 0 si todo ha ido bien, -1 si 404 o 1 si 400, 2 si 500.
 ********/
-STATUS scripts_aux(int method, char *http_response, char *date, char *sv_name, struct TODO *task)
+int scripts_aux(int method, char *http_response, char *date, char *sv_name, struct TODO *task)
 {
     char *script_output = NULL;
     ssize_t script_output_size = 0;
@@ -195,7 +196,7 @@ STATUS scripts_aux(int method, char *http_response, char *date, char *sv_name, s
         }
         char *parsed_args[count + 2];
         if (parse_args(task->data, parsed_args, count + 1) != OK)
-            return ERROR;
+            return 2;
         if (execute_script(method, task->uri, parsed_args, &script_output, &script_output_size) != OK)
         {
             if (script_output) free(script_output);
@@ -204,7 +205,7 @@ STATUS scripts_aux(int method, char *http_response, char *date, char *sv_name, s
                 free(parsed_args[i]);
                 i++;
             }
-            return ERROR;
+            return -1;
         }
         int i = 0;
         while (parsed_args[i] != NULL) {
@@ -215,7 +216,7 @@ STATUS scripts_aux(int method, char *http_response, char *date, char *sv_name, s
         if (execute_script(method, task->uri, NULL, &script_output, &script_output_size) != OK)
         {
             if (script_output) free(script_output);
-            return ERROR;
+            return -1;
         }
     }
     // Armar respuesta script
@@ -231,5 +232,5 @@ STATUS scripts_aux(int method, char *http_response, char *date, char *sv_name, s
     
     if (script_output) free(script_output);
 
-    return OK;
+    return 0;
 }

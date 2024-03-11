@@ -300,16 +300,22 @@ void send_http_response(struct TODO *task, struct ServerConfig config)
     }
     else
     {
-        http_400(config.sv_name, task);
+        http_500(config.sv_name, task->client_sock);
         return;
     }
     verb = get_verb(task->verb);
+    int ret = 0;
     switch (verb)
     {
     case 0: // GET
-        if (method_get(config, task) != OK)
+        if ((ret = method_get(config, task)) != 0)
         {
-            http_404(config.sv_name, task);
+            if (ret == -1)
+                http_404(config.sv_name, task);
+            else if (ret == 1)
+                http_400(config.sv_name, task);
+            else
+                http_500(config.sv_name, task->client_sock);
         }
         break;
     case 1: // POST

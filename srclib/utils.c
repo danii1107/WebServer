@@ -252,7 +252,6 @@ STATUS execute_script(int method, char *script_path, char *data[], char **respon
         {
             close(pipe_stdin[0]); // Cerrar lectura del pipe de entrada en el padre
 
-            // Suponiendo que 'data' es un arreglo de strings terminado en NULL
             for (int i = 0; data[i] != NULL; i++)
             {
                 write(pipe_stdin[1], data[i], strlen(data[i]));
