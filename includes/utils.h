@@ -43,12 +43,13 @@ STATUS get_content_type(char *uri, char *ct);
 int read_file(const char *path, char *buffer, size_t buffer_size);
 
 /********
-* FUNCIÓN: int execute_script(char *script_path, char *data[], char **response, ssize_t *response_size)
-* ARGS_IN: char *script_path - Ruta al script a ejecutar, char *data[] - Array de cadenas con los argumentos para el script, char **response - Puntero a una cadena donde almacenar la salida del script, ssize_t *response_size - Puntero a una variable donde almacenar el tamaño de la respuesta.
-* DESCRIPCIÓN: Ejecuta un script externo (Python o PHP), pasando los argumentos proporcionados y capturando su salida.
-* ARGS_OUT: OK si el script se ha ejecutado con éxito, ERROR si se ha producido un error.
-********/
-STATUS execute_script(char *script_path, char *data[], char **response, ssize_t *response_size);
+ * FUNCIÓN: int execute_script(char *script_path, char *data[], char **response, ssize_t *response_size)
+ * ARGS_IN: int method - almacena get o post en forma de int, char *script_path - Ruta al script a ejecutar, char *data[] - Array de cadenas con los argumentos para el script
+ * char **response - Puntero a una cadena donde almacenar la salida del script, ssize_t *response_size - Puntero a una variable donde almacenar el tamaño de la respuesta.
+ * DESCRIPCIÓN: Ejecuta un script externo (Python o PHP), pasando los argumentos proporcionados y capturando su salida.
+ * ARGS_OUT: OK si todo ha ido bien, ERROR si se ha producido un error.
+ ********/
+STATUS execute_script(int method, char *script_path, char *data[], char **response, ssize_t *response_size);
 
 /********
 * FUNCIÓN: void parse_args(const char *args, char *parsed_args[], size_t parsed_args_size)

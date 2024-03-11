@@ -161,13 +161,14 @@ STATUS parse_args(const char *args, char *parsed_args[], size_t parsed_args_size
 
 /********
  * FUNCIÓN: int execute_script(char *script_path, char *data[], char **response, ssize_t *response_size)
- * ARGS_IN: char *script_path - Ruta al script a ejecutar, char *data[] - Array de cadenas con los argumentos para el script, char **response - Puntero a una cadena donde almacenar la salida del script, ssize_t *response_size - Puntero a una variable donde almacenar el tamaño de la respuesta.
+ * ARGS_IN: int method - almacena get o post en forma de int, char *script_path - Ruta al script a ejecutar, char *data[] - Array de cadenas con los argumentos para el script
+ * char **response - Puntero a una cadena donde almacenar la salida del script, ssize_t *response_size - Puntero a una variable donde almacenar el tamaño de la respuesta.
  * DESCRIPCIÓN: Ejecuta un script externo (Python o PHP), pasando los argumentos proporcionados y capturando su salida.
  * ARGS_OUT: OK si todo ha ido bien, ERROR si se ha producido un error.
  ********/
-STATUS execute_script(char *script_path, char *data[], char **response, ssize_t *response_size)
+STATUS execute_script(int method, char *script_path, char *data[], char **response, ssize_t *response_size)
 {
-    int pipefd[2];
+    int pipefd[2], pipe_stdin[2];
     char executable[10];
     pid_t pid;
 
@@ -176,11 +177,28 @@ STATUS execute_script(char *script_path, char *data[], char **response, ssize_t 
         perror("pipe");
         return ERROR;
     }
+    if (method == 1) // Si el método es POST, necesitamos un pipe para escribir datos al script
+    {
+        if (pipe(pipe_stdin) == -1)
+        {
+            perror("pipe");
+            close(pipefd[0]);
+            close(pipefd[1]);
+            return ERROR;
+        }
+    }
 
     pid = fork();
     if (pid == -1)
     {
         perror("fork");
+        close(pipefd[0]);
+        close(pipefd[1]);
+        if (method == 1)
+        {
+            close(pipe_stdin[0]);
+            close(pipe_stdin[1]);
+        }
         return ERROR;
     }
     if (pid == 0)
@@ -189,19 +207,24 @@ STATUS execute_script(char *script_path, char *data[], char **response, ssize_t 
         dup2(pipefd[1], STDOUT_FILENO); // Redirigir la salida estándar al pipe
         dup2(pipefd[1], STDERR_FILENO); // Redirigir la salida de error al pipe
         close(pipefd[1]);               // Cerrar el extremo de escritura del pipe
+        close(pipefd[0]); // Cerrar lectura del pipe de salida
+        if (method == 1)
+        {
+            close(pipe_stdin[1]); // Cerrar escritura del pipe de entrada
+            dup2(pipe_stdin[0], STDIN_FILENO); // stdin ahora lee del pipe de entrada
+            close(pipe_stdin[0]); // Cerrado ya duplicado en STDIN_FILENO
+        }
 
         // Ejecutar el script python o php sin necesidad de exportar el entorno a ejecutar
         if (strstr(script_path, ".py"))
-        {
             strcpy(executable, "python3");
-        }
-        else
-        {
+        else if (strstr(script_path, ".php"))
             strcpy(executable, "php");
-        }
-        
+        else 
+            exit(EXIT_FAILURE);
+
         size_t data_count = 0;
-        if (data)
+        if (data && method == 0)
             for (data_count = 0; data[data_count]; data_count++);
 
         // Reservar espacio para el nombre del ejecutable, script_path, argumentos, y NULL
@@ -210,7 +233,7 @@ STATUS execute_script(char *script_path, char *data[], char **response, ssize_t 
         argv[1] = script_path;
 
         // Llenar argv con los argumentos
-        for (size_t i = 0; i < data_count; i++)
+        for (size_t i = 0; i < data_count && method == 0; i++)
             argv[i + 2] = data[i];
         argv[data_count + 2] = NULL; // Terminar argv con NULL
 
@@ -224,6 +247,19 @@ STATUS execute_script(char *script_path, char *data[], char **response, ssize_t 
         char buffer[16];
         ssize_t bytesRead;
         *response_size = 0;
+
+        if (method == 1) // POST
+        {
+            close(pipe_stdin[0]); // Cerrar lectura del pipe de entrada en el padre
+
+            // Suponiendo que 'data' es un arreglo de strings terminado en NULL
+            for (int i = 0; data[i] != NULL; i++)
+            {
+                write(pipe_stdin[1], data[i], strlen(data[i]));
+                if (data[i+1] != NULL) write(pipe_stdin[1], " ", 1); // Separar argumentos con espacio si no es el último
+            }
+            close(pipe_stdin[1]); // Cerrar escritura para señalar EOF al hijo
+        }
 
         // Leer la salida del script desde el pipe
         while ((bytesRead = read(pipefd[0], buffer, sizeof(buffer) - 1)) > 0)
@@ -245,6 +281,7 @@ STATUS execute_script(char *script_path, char *data[], char **response, ssize_t 
         }
 
         close(pipefd[0]);
+
         int status;
         waitpid(pid, &status, 0);
         if (WIFEXITED(status))

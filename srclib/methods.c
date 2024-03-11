@@ -9,7 +9,7 @@
 #include "../includes/methods.h"
 
 // Funciones auxiliares privadas
-STATUS scripts_aux(char *http_response, char *date, char *sv_name, struct TODO *task);
+STATUS scripts_aux(int method, char *http_response, char *date, char *sv_name, struct TODO *task);
 
 /********
 * FUNCIÓN: int method_get(struct ServerConfig config, struct TODO *task)
@@ -28,6 +28,7 @@ STATUS  method_get(struct ServerConfig config, struct TODO *task) {
     }
     
 	char http_response[16384];
+
     char date[64];
     int script = 0;
     
@@ -37,7 +38,7 @@ STATUS  method_get(struct ServerConfig config, struct TODO *task) {
     get_date(date);
     // Comprobar si es un script y ejecutarlo
     if (script == 1) {
-        if (scripts_aux(http_response, date, config.sv_name, task) != OK)
+        if (scripts_aux(0, http_response, date, config.sv_name, task) != OK)
             return ERROR;
     } else { // Si no hay datos o son innecesarios, buscar el archivo solicitado
         char content_type[64];
@@ -119,7 +120,7 @@ STATUS method_post(struct ServerConfig config, struct TODO *task)
     get_date(date);
     // Comprobar si es un script y ejecutarlo
     if (strstr(task->uri, ".py") || strstr(task->uri, ".php")) {
-        if (scripts_aux(http_response, date, config.sv_name, task) != OK)
+        if (scripts_aux(1, http_response, date, config.sv_name, task) != OK)
             return ERROR;
     } else { // Suponmos poder enviar un POST sin necesidad de ser un script, en servidores reales pueden ejecutarse estos post, 
             // en nuestro caso mandamos un mensaje de confirmación
@@ -171,21 +172,23 @@ STATUS method_options(char *sv_name, struct TODO *task) {
 
 /********
 * FUNCIÓN: int scripts_aux(char *http_response, char *date, char *sv_name, struct TODO *task)
-* ARGS_IN: char *http_response - String que almacena la respuesta del servidor,
+* ARGS_IN:
+*          int method - almacena get o post en forma de int 
+*          char *http_response - String que almacena la respuesta del servidor,
 *          char *date - String que almacena la fecha y hora actuales en formato GMT,
 *          char *sv_name - Nombre del servidor
 *          struct TODO *task - Tarea con información sobre la solicitud HTTP.
 * DESCRIPCIÓN: Llama a la función execute_script para ejecutar el script solicitado y almacenar su salida en http_response.
 * ARGS_OUT: STATUS - OK si todo ha ido bien, ERROR si se ha producido un error.
 ********/
-STATUS scripts_aux(char *http_response, char *date, char *sv_name, struct TODO *task)
+STATUS scripts_aux(int method, char *http_response, char *date, char *sv_name, struct TODO *task)
 {
     char *script_output = NULL;
     ssize_t script_output_size = 0;
     size_t count = 0;
 
     // Reservar memoria para array de argumentos y tokenizarlos
-    if (task->data[0] != '\0') // Script con args
+    if (task->data[0] != '\0' || method == 1) // Script con args
     {
         for (int i = 0; task->data[i]; i++) {
             if (task->data[i] == '&') count++;
@@ -193,7 +196,7 @@ STATUS scripts_aux(char *http_response, char *date, char *sv_name, struct TODO *
         char *parsed_args[count + 2];
         if (parse_args(task->data, parsed_args, count + 1) != OK)
             return ERROR;
-        if (execute_script(task->uri, parsed_args, &script_output, &script_output_size) != OK)
+        if (execute_script(method, task->uri, parsed_args, &script_output, &script_output_size) != OK)
         {
             if (script_output) free(script_output);
             int i = 0;
@@ -209,7 +212,7 @@ STATUS scripts_aux(char *http_response, char *date, char *sv_name, struct TODO *
             i++;
         }
     } else { // Script sin args
-        if (execute_script(task->uri, NULL, &script_output, &script_output_size) != OK)
+        if (execute_script(method, task->uri, NULL, &script_output, &script_output_size) != OK)
         {
             if (script_output) free(script_output);
             return ERROR;
