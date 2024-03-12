@@ -23,7 +23,7 @@ int scripts_aux(int method, char *http_response, char *date, char *sv_name, stru
 ********/
 STATUS  method_get(struct ServerConfig config, struct TODO *task) {
 
-    if(!config.sv_name || !task){
+    if(config.sv_name[0] == '\0' || !task){
         return ERROR;
     }
     
@@ -111,7 +111,7 @@ STATUS  method_get(struct ServerConfig config, struct TODO *task) {
 ********/
 STATUS method_post(struct ServerConfig config, struct TODO *task)
 {
-    if(!config.sv_name || !task){
+    if(config.sv_name[0] == '\0' || !task){
         return ERROR;
     }
     

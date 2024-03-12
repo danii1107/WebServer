@@ -285,7 +285,7 @@ int parse_http_request(const char *buffer, size_t buflen, struct TODO *task, FIL
 ********/
 void send_http_response(struct TODO *task, struct ServerConfig config)
 {
-    if(!task || !config.sv_name || !config.root)
+    if(!task || config.sv_name[0] == '\0' || config.root[0] == '\0')
         return;
     
     int verb;
