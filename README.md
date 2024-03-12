@@ -14,6 +14,7 @@
 8. El servidor soporta la ejecución de scripts en Python y PHP, sin embargo, los intérpretes deben estar instalados en su sistema.
 9. En el index del servidor verá dos scripts creados por nosotros, donde puede introducir los datos, para el GET un nombre, y para el POST, una temperatura Celsius, se ejecutan presionando los botones o con `curl "http://localhost:puerto/scripts/hola.py?nombre=Oscar" -i` y `curl "http://localhost:puerto/scripts/temperatura.py" -d "temp=30" -i` respectivamente.
 10. Puede modificar el campo *max_clients* de *server.conf* si su equipo no soporta los hilos preestablecidos (solo ocurre si se estresa el servidor con un gran número de peticiones simultáneas).
+11. Tenga en cuenta que si envía un ctrl+C al servidor mientras está procesando una petición, como la descarga de un vídeo, este no se cerrará hasta que la descarga haya finalizado para evitar fugas de memoria, no mate el proceso durante la ejecución de una petición.
 
 ---
 
