@@ -234,11 +234,14 @@ int scripts_aux(int method, char *http_response, char *date, char *sv_name, stru
                 i++;
             }
             i = 0;
-            while (dup_parsed_args[i] != NULL) {
-                free(dup_parsed_args[i]);
-                i++;
+            if (dup_parsed_args)
+            {
+                while (dup_parsed_args[i] != NULL) {
+                    free(dup_parsed_args[i]);
+                    i++;
+                }
+                free(dup_parsed_args);
             }
-            if (dup_parsed_args) free(dup_parsed_args);
             return -1;
         }
         int i = 0;
