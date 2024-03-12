@@ -230,10 +230,8 @@ int parse_http_request(const char *buffer, size_t buflen, struct TODO *task, FIL
                 // ELiminar ? y argumentos de la URI
                 task->uri[path_len - args_len - 1] = '\0';
             }
-            else
-            {
-                task->data[0] = '\0';
-            }
+            else task->data[0] = '\0';
+            task->dupdata[0] = '\0';
         }
         else if (strncmp(method, "POST", method_len) == 0)
         {
@@ -246,10 +244,24 @@ int parse_http_request(const char *buffer, size_t buflen, struct TODO *task, FIL
                 strncpy(task->data, body_start, body_len);
                 task->data[body_len] = '\0';
             }
-            else
+            else task->data[0] = '\0';
+            // GET/POST
+            const char *args_start = strchr(path, '?');
+            // Si hay argumentos en la URI
+            if (args_start != NULL && task->data[0] != '\0')
             {
-                task->data[0] = '\0';
+                args_start++;
+                // Copiar los argumentos de la solicitud a la estructura TO-DO
+                size_t args_len = path_len - (args_start - path);
+                if (args_len < sizeof(task->dupdata))
+                { // SEGFAULT
+                    strncpy(task->dupdata, args_start, args_len);
+                    task->dupdata[args_len] = '\0';
+                }
+                // ELiminar ? y argumentos de la URI
+                task->uri[path_len - args_len - 1] = '\0';
             }
+            else task->dupdata[0] = '\0';
         }
 
         // Mostrar petición en consola del servidor

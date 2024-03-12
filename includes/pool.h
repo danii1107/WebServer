@@ -17,6 +17,7 @@ struct TODO {
     char uri[1024];     			// URI solicitada 
     char version[16];   			// Versión del protocolo
     char data[1024];			    // Argumentos de la solicitud
+    char dupdata[1024];             // Argumentos de la solicitud duplicados
 };
 
 // Estructura del pool de hilos

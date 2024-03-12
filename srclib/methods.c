@@ -185,6 +185,7 @@ STATUS method_options(char *sv_name, struct TODO *task) {
 int scripts_aux(int method, char *http_response, char *date, char *sv_name, struct TODO *task)
 {
     char *script_output = NULL;
+    char **dup_parsed_args = NULL;
     ssize_t script_output_size = 0;
     size_t count = 0;
 
@@ -197,7 +198,34 @@ int scripts_aux(int method, char *http_response, char *date, char *sv_name, stru
         char *parsed_args[count + 2];
         if (parse_args(task->data, parsed_args, count + 1) != OK)
             return 2;
-        if (execute_script(method, task->uri, parsed_args, &script_output, &script_output_size) != OK)
+        if (task->dupdata[0] != '\0') {
+            for (int i = 0, count = 0; task->dupdata[i]; i++) {
+                if (task->dupdata[i] == '&') count++;
+            }
+            dup_parsed_args = calloc(count + 2, sizeof(char*));
+            if (dup_parsed_args == NULL) {
+                for (size_t i = 0; i < count; i++) {
+                    free(parsed_args[i]);
+                }
+                return 2;
+            }
+            if (parse_args(task->dupdata, dup_parsed_args, count + 1) != OK)
+            {
+                int i = 0;
+                while (parsed_args[i] != NULL) {
+                    free(parsed_args[i]);
+                    i++;
+                }
+                i = 0;
+                while (dup_parsed_args[i] != NULL) {
+                    free(dup_parsed_args[i]);
+                    i++;
+                }
+                if (dup_parsed_args) free(dup_parsed_args);
+                return 2;
+            }
+        }
+        if (execute_script(method, task->uri, parsed_args, &script_output, &script_output_size, dup_parsed_args) != OK)
         {
             if (script_output) free(script_output);
             int i = 0;
@@ -205,6 +233,12 @@ int scripts_aux(int method, char *http_response, char *date, char *sv_name, stru
                 free(parsed_args[i]);
                 i++;
             }
+            i = 0;
+            while (dup_parsed_args[i] != NULL) {
+                free(dup_parsed_args[i]);
+                i++;
+            }
+            if (dup_parsed_args) free(dup_parsed_args);
             return -1;
         }
         int i = 0;
@@ -212,8 +246,17 @@ int scripts_aux(int method, char *http_response, char *date, char *sv_name, stru
             free(parsed_args[i]);
             i++;
         }
+        i = 0;
+        if (dup_parsed_args)
+        {
+            while (dup_parsed_args[i] != NULL) {
+                free(dup_parsed_args[i]);
+                i++;
+            }
+            free(dup_parsed_args);
+        }
     } else { // Script sin args
-        if (execute_script(method, task->uri, NULL, &script_output, &script_output_size) != OK)
+        if (execute_script(method, task->uri, NULL, &script_output, &script_output_size, NULL) != OK)
         {
             if (script_output) free(script_output);
             return -1;

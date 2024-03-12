@@ -166,7 +166,7 @@ STATUS parse_args(const char *args, char *parsed_args[], size_t parsed_args_size
  * DESCRIPCIÓN: Ejecuta un script externo (Python o PHP), pasando los argumentos proporcionados y capturando su salida.
  * ARGS_OUT: OK si todo ha ido bien, ERROR si se ha producido un error.
  ********/
-STATUS execute_script(int method, char *script_path, char *data[], char **response, ssize_t *response_size)
+STATUS execute_script(int method, char *script_path, char *data[], char **response, ssize_t *response_size, char *dupdata[])
 {
     int pipefd[2], pipe_stdin[2];
     char executable[10];
@@ -226,6 +226,8 @@ STATUS execute_script(int method, char *script_path, char *data[], char **respon
         size_t data_count = 0;
         if (data && method == 0)
             for (data_count = 0; data[data_count]; data_count++);
+        if (dupdata && method == 1)
+            for (data_count = 0; dupdata[data_count]; data_count++);
 
         // Reservar espacio para el nombre del ejecutable, script_path, argumentos, y NULL
         char *argv[data_count + 3];
@@ -235,6 +237,8 @@ STATUS execute_script(int method, char *script_path, char *data[], char **respon
         // Llenar argv con los argumentos
         for (size_t i = 0; i < data_count && method == 0; i++)
             argv[i + 2] = data[i];
+        for (size_t i = 0; i < data_count && method == 1; i++)
+            argv[i + 2] = dupdata[i];
         argv[data_count + 2] = NULL; // Terminar argv con NULL
 
         execvp(executable, argv);

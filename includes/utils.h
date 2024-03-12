@@ -49,7 +49,7 @@ int read_file(const char *path, char *buffer, size_t buffer_size);
  * DESCRIPCIÓN: Ejecuta un script externo (Python o PHP), pasando los argumentos proporcionados y capturando su salida.
  * ARGS_OUT: OK si todo ha ido bien, ERROR si se ha producido un error.
  ********/
-STATUS execute_script(int method, char *script_path, char *data[], char **response, ssize_t *response_size);
+STATUS execute_script(int method, char *script_path, char *data[], char **response, ssize_t *response_size, char *dupdata[]);
 
 /********
 * FUNCIÓN: void parse_args(const char *args, char *parsed_args[], size_t parsed_args_size)
