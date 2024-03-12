@@ -6,15 +6,21 @@ OBJDIR = obj
 LIBDIR = lib
 SRCLIBDIR = srclib
 LIBPICO = $(LIBDIR)/libpicohttpparser.a
-PERSLIB = $(LIBDIR)/libpers.a
+LIBHTTP = $(LIBDIR)/libhttp.a
+LIBPOOL = $(LIBDIR)/libpool.a
+LIBSOCK = $(LIBDIR)/libsockets.a
+LIBLOG = $(LIBDIR)/liblog.a 
 OBJ_PICOHTTPPARSER = $(OBJDIR)/picohttpparser.o
-OBJ_PERS = $(OBJDIR)/methods.o $(OBJDIR)/pool.o $(OBJDIR)/utils.o $(OBJDIR)/sockets.o $(OBJDIR)/log.o
-OBJ_SERVER = $(OBJDIR)/http.o $(OBJDIR)/server.o
+OBJ_HTTP = $(OBJDIR)/http.o $(OBJDIR)/methods.o $(OBJDIR)/utils.o $(OBJDIR)/log.o $(OBJDIR)/picohttpparser.o
+OBJ_POOL = $(OBJDIR)/pool.o $(OBJDIR)/log.o $(OBJDIR)/http.o
+OBJ_SOCK = $(OBJDIR)/sockets.o $(OBJDIR)/log.o
+OBJ_LOG = $(OBJDIR)/log.o
+OBJ_SERVER = $(OBJDIR)/server.o
 ZIP_URL=https://github.com/alber1997/AUXFOLDER/raw/main/root.zip
 ZIP_FILE=root.zip
 UNZIP_DIR=root
 
-all: verificar_root_o_zip descomprimir_zip libpicohttpparser libpers server
+all: verificar_root_o_zip descomprimir_zip libpicohttpparser libpool libsockets libhttp liblog server
 
 verificar_root_o_zip:
 	@if [ -d $(UNZIP_DIR) ]; then \
@@ -44,14 +50,23 @@ $(OBJDIR)/%.o: $(SRCLIBDIR)/%.c $(DEPS)
 libpicohttpparser: $(OBJ_PICOHTTPPARSER)
 	ar rcs $(LIBPICO) $^
 
-libpers: $(OBJ_PERS)
-	ar rcs $(PERSLIB) $^
+libhttp: $(OBJ_HTTP)
+	ar rcs $(LIBHTTP) $^
+
+libpool: $(OBJ_POOL)
+	ar rcs $(LIBPOOL) $^
+
+libsockets: $(OBJ_SOCK)
+	ar rcs $(LIBSOCK) $^
+
+liblog: $(OBJ_LOG)
+	ar rcs $(LIBLOG) $^
 
 $(OBJDIR)/%.o: src/%.c $(DEPS)
 	$(CC) -c -o $@ $< $(CFLAGS)
 
 server: $(OBJ_SERVER)
-	$(CC) -o $@ $^ $(CFLAGS) -L$(LIBDIR) -lpicohttpparser -lpers
+	$(CC) -o $@ $^ $(CFLAGS) -L$(LIBDIR) -lpicohttpparser -lpthread -lpool -lhttp -lsockets -llog
 
 debug:
 	$(DEBUG) server

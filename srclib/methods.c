@@ -44,24 +44,24 @@ STATUS  method_get(struct ServerConfig config, struct TODO *task) {
     } else { // Si no hay datos o son innecesarios, buscar el archivo solicitado
         char content_type[64];
         if (get_content_type(task->uri, content_type) != 0)
-            return ERROR;
+            return -1;
 
         // Abre el archivo solicitado en modo de lectura
         FILE *file = fopen(task->uri, "rb");
         if (!file) {
             // Enviar una respuesta 404 Not Found si el archivo no existe
-            return ERROR;
+            return -1;
         }
         
         // Buscar el tamaño del archivo
         if (fseek(file, 0, SEEK_END) != 0) {
             fclose(file);
-            return ERROR;
+            return -1;
         }
         long file_size = ftell(file);
         if (file_size == -1) {
             fclose(file);
-            return ERROR;
+            return -1;
         }
         rewind(file);
         
@@ -69,12 +69,12 @@ STATUS  method_get(struct ServerConfig config, struct TODO *task) {
         char *file_content = malloc(file_size);
         if (!file_content) {
             fclose(file);
-            return ERROR;
+            return 2;
         }
         if((int) fread(file_content, file_size, 1, file) < 0){
             free(file_content);
             fclose(file);
-            return ERROR;
+            return 2;
         }
         fclose(file);
 
@@ -95,11 +95,11 @@ STATUS  method_get(struct ServerConfig config, struct TODO *task) {
         send(task->client_sock, file_content, file_size, 0);
 
         if (file_content) free(file_content);
-        return OK;
+        return 0;
     }
     // Enviar respuesta si no se ha enviado ya
     send(task->client_sock, http_response, strlen(http_response), 0);
-    return OK;
+    return 0;
 }
 
 /********
