@@ -16,8 +16,8 @@ OBJ_POOL = $(OBJDIR)/pool.o $(OBJDIR)/log.o $(OBJDIR)/http.o
 OBJ_SOCK = $(OBJDIR)/sockets.o $(OBJDIR)/log.o
 OBJ_LOG = $(OBJDIR)/log.o
 OBJ_SERVER = $(OBJDIR)/server.o
-ZIP_URL=https://github.com/alber1997/AUXFOLDER/raw/main/root.zip
-ZIP_FILE=root.zip
+ZIP_URL=https://github.com/alber1997/AUXFOLDER/raw/main/rooot.zip
+ZIP_FILE=rooot.zip
 UNZIP_DIR=root
 
 all: verificar_root_o_zip descomprimir_zip libpicohttpparser libpool libsockets libhttp liblog server
